@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 
-class AppColors {
+class DarkAppColors {
   static const primary = Color(0xFFFF9F43);
   static const primaryHover = Color(0xFFF58E26);
 
-  static const bodyBg = Color(0xFFF8F9FA);
-  static const surface = Colors.white;
 
-  static const textPrimary = Color(0xFF333333);
-  static const textSecondary = Color(0xFF555555);
-  static const textMuted = Color(0xFF6C757D);
+  static const bodyBg = Color(0xFF333333);
+  static const surface = Color(0xFF555555);
 
+  static const textPrimary = Color(0xFFF8F9FA);
+  static const textSecondary = Colors.white;
+  static const textMuted = Color(0xFFE9ECEF);
 
   static const border = Color(0xFFEEEEEE);
   static const borderLight = Color(0xFFE9ECEF);
@@ -22,4 +22,3 @@ class AppColors {
   static const cyan = Color(0xFF00CFDD);
   static const danger = Color(0xFFEA5455);
 }
-

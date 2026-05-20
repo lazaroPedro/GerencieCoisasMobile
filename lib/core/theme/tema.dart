@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gerencie_coisas/core/theme/app_colors.dart';
+import 'package:gerencie_coisas/core/theme/dark_app_colors.dart';
 
 class AppTheme {
   static ThemeData lightTheme = ThemeData(
@@ -15,13 +16,13 @@ class AppTheme {
     ),
 
     appBarTheme: const AppBarTheme(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       elevation: 0,
       foregroundColor: AppColors.textPrimary,
     ),
 
     cardTheme: CardThemeData(
-      color: Colors.white,
+      color: AppColors.surface,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
@@ -46,5 +47,51 @@ class AppTheme {
     ),
 
     dividerColor: AppColors.border,
+  );
+
+  static ThemeData darkTheme = ThemeData(
+    useMaterial3: true,
+
+    scaffoldBackgroundColor: DarkAppColors.bodyBg,
+
+    colorScheme: ColorScheme.dark(
+      primary: DarkAppColors.primary,
+      secondary: DarkAppColors.cyan,
+      surface: DarkAppColors.surface,
+      error: DarkAppColors.danger,
+    ),
+
+    appBarTheme: const AppBarTheme(
+      backgroundColor: DarkAppColors.surface,
+      elevation: 0,
+      foregroundColor: DarkAppColors.textPrimary,
+    ),
+
+    cardTheme: CardThemeData(
+      color: DarkAppColors.surface,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+    ),
+
+    textTheme: const TextTheme(
+      bodyMedium: TextStyle(
+        color: DarkAppColors.textSecondary,
+        fontSize: 15,
+      ),
+    ),
+
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: DarkAppColors.primary,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+    ),
+
+    dividerColor: DarkAppColors.border,
   );
 }
