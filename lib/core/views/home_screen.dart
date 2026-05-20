@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gerencie_coisas/features/categorias/views/categoria_view.dart';
 import 'package:gerencie_coisas/features/movimentacoes/movimentacoes_list_page.dart';
+import 'package:gerencie_coisas/features/produtos/views/produtos_list_page.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,7 +17,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final screens = [
       const Center(child: Text('Dashboard')),
-      const Center(child: Text('Produtos')),
+       ProdutosListPage(),
        CategoriaView(),
       const MovimentacoesListPage(),
     ];
