@@ -1,12 +1,12 @@
-class Categoria {
+class CategoriaModel {
   final int id;
   final String name;
-  final Categoria? parent;
+  final CategoriaModel? parent;
 
-  Categoria({
+  CategoriaModel({
     required this.id,
     required this.name,
-    required this.parent,
+    this.parent,
   });
 
 }
