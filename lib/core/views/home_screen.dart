@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gerencie_coisas/features/categorias/views/categoria_view.dart';
 import 'package:gerencie_coisas/features/config/views/config_view.dart';
 import 'package:gerencie_coisas/features/movimentacoes/movimentacoes_list_page.dart';
+import 'package:gerencie_coisas/features/produtos/views/produtos_list_page.dart';
 
 class HomeScreen extends StatefulWidget {
 
@@ -18,14 +19,14 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final screens = [
-      const Center(child: Text('Dashboard')),
-      const Center(child: Text('Produtos')),
+   //   const Center(child: Text('Dashboard')),
+      const ProdutosListPage(),
        CategoriaView(),
       const MovimentacoesListPage(),
        const ConfigView(),
     ];
     final titles = [
-      const Text('Dashboard'),
+     // const Text('Dashboard'),
       const Text('Produtos'),
       const Text('Categorias'),
       const Text('Movimentações'),
@@ -50,10 +51,10 @@ class _HomeScreenState extends State<HomeScreen> {
         type: BottomNavigationBarType.fixed,
 
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Dashboard',
-          ),
+      //    BottomNavigationBarItem(
+      //      icon: Icon(Icons.dashboard),
+          //  label: 'Dashboard',
+     //     ),
 
           BottomNavigationBarItem(
             icon: Icon(Icons.inventory_2_outlined),

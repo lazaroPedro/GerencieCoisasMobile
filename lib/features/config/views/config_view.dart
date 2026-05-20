@@ -3,7 +3,7 @@ import 'package:gerencie_coisas/core/theme/theme_notifier.dart';
 
 
 class ConfigView extends StatelessWidget {
-  const ConfigView({super.key}); // Construtor limpo
+  const ConfigView({super.key}); 
 
   @override
   Widget build(BuildContext context) {
