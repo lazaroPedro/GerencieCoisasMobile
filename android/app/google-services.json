@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "394669289708",
+    "project_id": "gerenciecoisas",
+    "storage_bucket": "gerenciecoisas.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:394669289708:android:8a0e2a30dd2a79a86e35c9",
+        "android_client_info": {
+          "package_name": "com.example.gerencie_coisas"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-IBx0S26_BOhakLxMYYxfQWNnxjyp_n4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
