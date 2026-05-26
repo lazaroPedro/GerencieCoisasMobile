@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'movimentacao_model.dart';
+import 'services/movimentacao_service.dart';
 
 class MovimentacoesFormPage extends StatefulWidget {
   const MovimentacoesFormPage({super.key});
@@ -45,32 +46,57 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
     _observacaoController.dispose();
     super.dispose();
   }
-
-  void _salvar() async {
+void _salvar() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _salvando = true);
-    // Simula um delay de salvamento
-    await Future.delayed(const Duration(milliseconds: 800));
 
-    if (!mounted) return;
-    setState(() => _salvando = false);
+    try { // <--- ADICIONADO: Início do bloco de tentativa
+      final service = MovimentacaoService();
+      await service.salvar(Movimentacao(
+        id: '',
+        produto: _produtoSelecionado!,
+        fornecedor: _fornecedorSelecionado!,
+        categoria: 'sem categoria',
+        tipo: _tipo,
+        quantidade: int.parse(_quantidadeController.text),
+        valorUnitario:
+            double.parse(_valorController.text.replaceAll(',', '.')),
+        data: DateTime.now(),
+        observacao: _observacaoController.text.isEmpty
+            ? null
+            : _observacaoController.text,
+      ));
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Movimentação registrada com sucesso!'),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: const Color(0xFF2E7D32),
-        action: SnackBarAction(
-          label: 'OK',
-          textColor: Colors.white,
-          onPressed: () {},
+      if (!mounted) return;
+      setState(() => _salvando = false); // <--- MODIFICADO: Movido para dentro do try
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Movimentação registrada com sucesso!'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF2E7D32),
+          action: SnackBarAction(
+            label: 'OK',
+            textColor: Colors.white,
+            onPressed: () {},
+          ),
         ),
-      ),
-    );
-    Navigator.pop(context);
+      );
+      Navigator.pop(context);
+    } catch (e) { // <--- ADICIONADO: Bloco para capturar e tratar o erro
+      if (!mounted) return;
+      setState(() => _salvando = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao salvar: $e'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFFC62828), // SnackBar vermelha de erro
+        ),
+      );
+    }
   }
-
+  
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

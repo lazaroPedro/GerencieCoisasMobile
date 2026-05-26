@@ -51,5 +51,5 @@ Na raiz do aplicativo (`MaterialApp`), basta passar essas configurações para q
 MaterialApp(
   theme: AppTheme.lightTheme,
   darkTheme: AppTheme.darkTheme, 
-  themeMode: ThemeMode.system,  
+  themeMode: ThemeMode.system,
 )
