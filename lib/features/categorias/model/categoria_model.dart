@@ -1,12 +1,27 @@
 class CategoriaModel {
   final int id;
   final String name;
-  final CategoriaModel? parent;
+  final int parentId;
 
   CategoriaModel({
     required this.id,
     required this.name,
-    this.parent,
+    this.parentId,
   });
 
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'parentId': parentId,
+    };
+  }
+
+  factory CategoriaModel.fromMap(Map<String, dynamic> map) {
+    return CategoriaModel(
+      id: map['id'],
+      name: map['name'],
+      parentId: map['parentId'],
+    );
+  }
 }
