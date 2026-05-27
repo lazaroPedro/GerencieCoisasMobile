@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../model/produto.dart';
+import '../services/produto_service.dart'; 
+import '../../categorias/model/categoria_model.dart';
+import '../../categorias/repositories/categoria_repository.dart';
 
 class ProdutosFormPage extends StatefulWidget {
   final Produto? produto;
@@ -19,36 +22,48 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
   late TextEditingController _descriptionController;
   late TextEditingController _priceController;
   late TextEditingController _quantityController;
+  late TextEditingController _supplierController;
 
-  String? _fornecedorSelecionado;
-  int? _categoriaSelecionada;
+  String? _categoriaSelecionada; 
   bool _salvando = false;
-
-  final List<Map<String, dynamic>> _categorias = [
-    {'id': 1, 'nome': 'Eletrônicos'},
-    {'id': 2, 'nome': 'Periféricos'},
-    {'id': 3, 'nome': 'Armazenamento'},
-  ];
-
-  final List<String> _fornecedores = [
-    'Tech Distribuidora Ltda',
-    'InfoShop Comércio',
-    'Gamer Store',
-  ];
+  bool _carregandoDados = true;
+  List<CategoriaModel> _categoriasReais = [];
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.produto?.name ?? '');
-    _descriptionController = TextEditingController(text: widget.produto?.description ?? '');
+    _nameController =
+        TextEditingController(text: widget.produto?.name ?? '');
+    _descriptionController =
+        TextEditingController(text: widget.produto?.description ?? '');
     _priceController = TextEditingController(
-      text: widget.produto != null ? widget.produto!.price.toStringAsFixed(2) : '',
-    );
+        text: widget.produto != null
+            ? widget.produto!.price.toString()
+            : '');
     _quantityController = TextEditingController(
-      text: widget.produto?.quantity.toString() ?? '',
-    );
-    _fornecedorSelecionado = widget.produto?.supplier;
+        text: widget.produto != null
+            ? widget.produto!.quantity.toString()
+            : '');
+    _supplierController =
+        TextEditingController(text: widget.produto?.supplier ?? '');
     _categoriaSelecionada = widget.produto?.categoryId;
+    _carregarDadosIniciais();
+  }
+
+  Future<void> _carregarDadosIniciais() async {
+    try {
+      final categoriaRepo = CategoriaRepository();
+      final categoriasDoBanco = await categoriaRepo.getAll();
+
+      if (!mounted) return;
+      setState(() {
+        _categoriasReais = categoriasDoBanco;
+        _carregandoDados = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _carregandoDados = false);
+    }
   }
 
   @override
@@ -57,6 +72,7 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
     _descriptionController.dispose();
     _priceController.dispose();
     _quantityController.dispose();
+    _supplierController.dispose();
     super.dispose();
   }
 
@@ -64,23 +80,50 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _salvando = true);
-    
-    await Future.delayed(const Duration(milliseconds: 800));
 
-    if (!mounted) return;
-    setState(() => _salvando = false);
+    try {
+      final service = ProdutoService();
+      
+      // Cria o objeto Produto com os dados da tela
+      final produtoParaSalvar = Produto(
+        id: widget.produto?.id ?? '',
+        name: _nameController.text.trim(),
+        description: _descriptionController.text.trim(),
+        quantity: int.parse(_quantityController.text),
+        price: double.parse(_priceController.text.replaceAll(',', '.')),
+        supplier: _supplierController.text.trim(),
+        categoryId: _categoriaSelecionada!,
+      );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(widget.produto == null 
-            ? 'Produto cadastrado com sucesso!' 
-            : 'Produto atualizado com sucesso!'),
-        backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-    
-    Navigator.pop(context);
+      await service.salvar(produtoParaSalvar);
+
+      if (!mounted) return;
+      setState(() => _salvando = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(widget.produto == null 
+              ? 'Produto cadastrado com sucesso!' 
+              : 'Produto atualizado com sucesso!'),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      
+      Navigator.pop(context);
+
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _salvando = false);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao salvar: $e'),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
@@ -100,16 +143,20 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
             TextFormField(
               controller: _nameController,
               decoration: _inputDecoration(hint: 'Nome do produto'),
-              validator: (v) => v == null || v.isEmpty ? 'Campo obrigatório' : null,
+              validator: (v) =>
+                  v == null || v.trim().isEmpty ? 'Campo obrigatório' : null,
             ),
             const SizedBox(height: 16),
+
             _buildLabel('Descrição'),
             TextFormField(
               controller: _descriptionController,
-              decoration: _inputDecoration(hint: 'Descrição detalhada do produto...'),
+              decoration:
+                  _inputDecoration(hint: 'Descrição detalhada do produto...'),
               maxLines: 3,
             ),
             const SizedBox(height: 16),
+
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -121,11 +168,14 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
                       TextFormField(
                         controller: _priceController,
                         decoration: _inputDecoration(hint: '0.00'),
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
                         inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'[0-9.,]')),
                         ],
-                        validator: (v) => v == null || v.isEmpty ? 'Obrigatório' : null,
+                        validator: (v) =>
+                            v == null || v.isEmpty ? 'Obrigatório' : null,
                       ),
                     ],
                   ),
@@ -143,7 +193,8 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
                         ],
-                        validator: (v) => v == null || v.isEmpty ? 'Obrigatório' : null,
+                        validator: (v) =>
+                            v == null || v.isEmpty ? 'Obrigatório' : null,
                       ),
                     ],
                   ),
@@ -151,31 +202,38 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
               ],
             ),
             const SizedBox(height: 16),
+
+            // Categoria (dropdown do Firebase)
             _buildLabel('Categoria'),
-            DropdownButtonFormField<int>(
-              value: _categoriaSelecionada,
-              decoration: _inputDecoration(hint: 'Selecione a categoria'),
-              items: _categorias.map((cat) {
-                return DropdownMenuItem<int>(
-                  value: cat['id'],
-                  child: Text(cat['nome']),
-                );
-              }).toList(),
-              onChanged: (v) => setState(() => _categoriaSelecionada = v),
-              validator: (v) => v == null ? 'Selecione uma categoria' : null,
-            ),
+            _carregandoDados
+                ? const Center(child: CircularProgressIndicator())
+                : DropdownButtonFormField<String>(
+                    value: _categoriaSelecionada,
+                    decoration:
+                        _inputDecoration(hint: 'Selecione a categoria'),
+                    items: _categoriasReais.map((cat) {
+                      return DropdownMenuItem<String>(
+                        value: cat.id,
+                        child: Text(cat.name),
+                      );
+                    }).toList(),
+                    onChanged: (v) =>
+                        setState(() => _categoriaSelecionada = v),
+                    validator: (v) =>
+                        v == null ? 'Selecione uma categoria' : null,
+                  ),
             const SizedBox(height: 16),
+
+            // Fornecedor (texto livre)
             _buildLabel('Fornecedor'),
-            DropdownButtonFormField<String>(
-              value: _fornecedorSelecionado,
-              decoration: _inputDecoration(hint: 'Selecione o fornecedor'),
-              items: _fornecedores.map((f) {
-                return DropdownMenuItem(value: f, child: Text(f));
-              }).toList(),
-              onChanged: (v) => setState(() => _fornecedorSelecionado = v),
-              validator: (v) => v == null ? 'Selecione um fornecedor' : null,
+            TextFormField(
+              controller: _supplierController,
+              decoration: _inputDecoration(hint: 'Nome do fornecedor'),
+              validator: (v) =>
+                  v == null || v.trim().isEmpty ? 'Campo obrigatório' : null,
             ),
             const SizedBox(height: 32),
+
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -190,9 +248,10 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text(
-                        'Salvar Produto',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    : Text(
+                        isEditing ? 'Atualizar Produto' : 'Salvar Produto',
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
                       ),
               ),
             ),
@@ -222,7 +281,8 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
       hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
       filled: true,
       fillColor: AppColors.surface,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
         borderSide: const BorderSide(color: AppColors.border),

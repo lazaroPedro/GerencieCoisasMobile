@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'movimentacao_model.dart';
+import 'services/movimentacao_service.dart';
+import '../produtos/model/produto.dart';
+import '../produtos/services/produto_service.dart';
 
 class MovimentacoesFormPage extends StatefulWidget {
   const MovimentacoesFormPage({super.key});
@@ -14,32 +17,40 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
 
   TipoMovimentacao _tipo = TipoMovimentacao.entrada;
   String? _produtoSelecionado;
-  String? _fornecedorSelecionado;
+  final _fornecedorController = TextEditingController();
   final _quantidadeController = TextEditingController();
   final _valorController = TextEditingController();
   final _observacaoController = TextEditingController();
 
-  // Dados falsos
-  final List<String> _produtos = [
-    'Notebook Dell Inspiron 15',
-    'Mouse sem fio Logitech M705',
-    'Teclado Mecânico Redragon K552',
-    'Monitor LG 24" Full HD',
-    'SSD Kingston 480GB',
-  ];
-
-  final List<String> _fornecedores = [
-    'Tech Distribuidora Ltda',
-    'InfoShop Comércio',
-    'Gamer Store',
-    'Conect Acessórios',
-    'MegaInfo LTDA',
-  ];
-
   bool _salvando = false;
+  bool _carregandoDados = true;
+  List<Produto> _produtosReais = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarDadosIniciais();
+  }
+
+  Future<void> _carregarDadosIniciais() async {
+    try {
+      final produtoService = ProdutoService();
+      final produtosDoBanco = await produtoService.listar();
+
+      if (!mounted) return;
+      setState(() {
+        _produtosReais = produtosDoBanco;
+        _carregandoDados = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _carregandoDados = false);
+    }
+  }
 
   @override
   void dispose() {
+    _fornecedorController.dispose();
     _quantidadeController.dispose();
     _valorController.dispose();
     _observacaoController.dispose();
@@ -50,25 +61,50 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _salvando = true);
-    // Simula um delay de salvamento
-    await Future.delayed(const Duration(milliseconds: 800));
 
-    if (!mounted) return;
-    setState(() => _salvando = false);
+    try {
+      final service = MovimentacaoService();
+      await service.salvar(Movimentacao(
+        id: '',
+        produto: _produtoSelecionado!,
+        fornecedor: _fornecedorController.text.trim(),
+        categoria: 'sem categoria',
+        tipo: _tipo,
+        quantidade: int.parse(_quantidadeController.text),
+        valorUnitario: double.parse(_valorController.text.replaceAll(',', '.')),
+        data: DateTime.now(),
+        observacao: _observacaoController.text.isEmpty
+            ? null
+            : _observacaoController.text,
+      ));
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Movimentação registrada com sucesso!'),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: const Color(0xFF2E7D32),
-        action: SnackBarAction(
-          label: 'OK',
-          textColor: Colors.white,
-          onPressed: () {},
+      if (!mounted) return;
+      setState(() => _salvando = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Movimentação registrada com sucesso!'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF2E7D32),
+          action: SnackBarAction(
+            label: 'OK',
+            textColor: Colors.white,
+            onPressed: () {},
+          ),
         ),
-      ),
-    );
-    Navigator.pop(context);
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _salvando = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao salvar: $e'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFFC62828),
+        ),
+      );
+    }
   }
 
   @override
@@ -76,7 +112,8 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isEntrada = _tipo == TipoMovimentacao.entrada;
-    final tipoColor = isEntrada ? const Color(0xFF2E7D32) : const Color(0xFFC62828);
+    final tipoColor =
+        isEntrada ? const Color(0xFF2E7D32) : const Color(0xFFC62828);
 
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainerLowest,
@@ -95,7 +132,7 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Seletor de tipo
+            // Tipo
             _SectionLabel(label: 'Tipo de movimentação'),
             const SizedBox(height: 8),
             Row(
@@ -127,45 +164,46 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
             ),
             const SizedBox(height: 20),
 
-            // Produto
+            // Produto (dropdown do Firebase)
             _SectionLabel(label: 'Produto'),
             const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              value: _produtoSelecionado,
-              decoration: _inputDecoration(
-                context,
-                hint: 'Selecione o produto',
-                prefixIcon: Icons.inventory_2_outlined,
-              ),
-              items: _produtos
-                  .map((p) => DropdownMenuItem(value: p, child: Text(p)))
-                  .toList(),
-              onChanged: (v) => setState(() => _produtoSelecionado = v),
-              validator: (v) =>
-                  v == null ? 'Selecione um produto' : null,
-            ),
+            _carregandoDados
+                ? const Center(child: CircularProgressIndicator())
+                : DropdownButtonFormField<String>(
+                    value: _produtoSelecionado,
+                    decoration: _inputDecoration(
+                      context,
+                      hint: 'Selecione o produto',
+                      prefixIcon: Icons.inventory_2_outlined,
+                    ),
+                    items: _produtosReais.map((p) {
+                      return DropdownMenuItem<String>(
+                        value: p.name,
+                        child: Text(p.name),
+                      );
+                    }).toList(),
+                    onChanged: (v) => setState(() => _produtoSelecionado = v),
+                    validator: (v) =>
+                        v == null ? 'Selecione um produto' : null,
+                  ),
             const SizedBox(height: 16),
 
-            // Fornecedor
+            // Fornecedor (texto livre)
             _SectionLabel(label: 'Fornecedor'),
             const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              value: _fornecedorSelecionado,
+            TextFormField(
+              controller: _fornecedorController,
               decoration: _inputDecoration(
                 context,
-                hint: 'Selecione o fornecedor',
+                hint: 'Nome do fornecedor',
                 prefixIcon: Icons.store_outlined,
               ),
-              items: _fornecedores
-                  .map((f) => DropdownMenuItem(value: f, child: Text(f)))
-                  .toList(),
-              onChanged: (v) => setState(() => _fornecedorSelecionado = v),
               validator: (v) =>
-                  v == null ? 'Selecione um fornecedor' : null,
+                  v == null || v.trim().isEmpty ? 'Campo obrigatório' : null,
             ),
             const SizedBox(height: 16),
 
-            // Quantidade e Valor lado a lado
+            // Quantidade e Valor
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -301,7 +339,8 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
           const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.3)),
+        borderSide:
+            BorderSide(color: colorScheme.outline.withOpacity(0.3)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -310,8 +349,7 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide:
-            BorderSide(color: colorScheme.primary, width: 1.5),
+        borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -332,8 +370,7 @@ class _SectionLabel extends StatelessWidget {
       label,
       style: Theme.of(context).textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w600,
-            color:
-                Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
           ),
     );
   }
@@ -368,7 +405,8 @@ class _TipoButton extends StatelessWidget {
           color: selected ? color : colorScheme.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: selected ? color : colorScheme.outline.withOpacity(0.3),
+            color:
+                selected ? color : colorScheme.outline.withOpacity(0.3),
             width: selected ? 2 : 1,
           ),
           boxShadow: selected
@@ -383,8 +421,7 @@ class _TipoButton extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Icon(icon,
-                color: selected ? Colors.white : color, size: 28),
+            Icon(icon, color: selected ? Colors.white : color, size: 28),
             const SizedBox(height: 6),
             Text(
               label,

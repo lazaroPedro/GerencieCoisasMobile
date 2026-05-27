@@ -1,61 +1,61 @@
 import 'package:flutter/material.dart';
+import 'package:gerencie_coisas/features/categorias/view_model/categoria_view_model.dart';
+import 'package:gerencie_coisas/features/categorias/views/create_categoria_view.dart';
+import 'package:gerencie_coisas/features/categorias/views/delete_categoria_view.dart';
 
-class Categoria {
-  final int id;
-  final String name;
-  final int produtos;
-  final List<Categoria> children;
 
-  Categoria({
-    required this.id,
-    required this.name,
-    required this.produtos,
-    this.children = const [],
-  });
+
+class CategoriaView extends StatefulWidget {
+  const CategoriaView({super.key});
+
+  @override
+  State<CategoriaView> createState() => _CategoriaViewState();
 }
 
-class CategoriaView extends StatelessWidget {
-  CategoriaView({super.key});
+class _CategoriaViewState extends State<CategoriaView> {
 
-  final List<Categoria> categorias = [
-    Categoria(
-      id: 1,
-      name: 'Eletrônicos',
-      produtos: 12,
+  final CategoriaViewModel viewModel = CategoriaViewModel();
 
-      children: [
-        Categoria(id: 2, name: 'Celulares', produtos: 5),
 
-        Categoria(id: 3, name: 'Notebooks', produtos: 7),
-      ],
-    ),
-
-    Categoria(id: 4, name: 'Roupas', produtos: 0),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    viewModel.loadCategorias();
+    viewModel.addListener(() {
+      setState(() {});
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => CreateCategoriaView(viewModel: viewModel),
+            ),
+          );
+        },
         child: const Icon(Icons.add),
       ),
 
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: categorias.length,
+        itemCount: viewModel.categorias.length,
 
         itemBuilder: (context, index) {
-          final categoria = categorias[index];
+          final categoria = viewModel.categorias[index];
 
           return Container(
             margin: const EdgeInsets.only(bottom: 14),
 
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: ColorScheme.of(context).surface,
               borderRadius: BorderRadius.circular(18),
 
-              border: Border.all(color: Colors.grey.shade200),
+              
             ),
 
             child: Theme(
@@ -78,16 +78,17 @@ class CategoriaView extends StatelessWidget {
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    PopupMenuButton(
-                      itemBuilder:
-                          (_) => const [
-                            PopupMenuItem(value: 'edit', child: Text('Editar')),
-
-                            PopupMenuItem(
-                              value: 'delete',
-                              child: Text('Excluir'),
-                            ),
-                          ],
+                    IconButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => DeleteCategoriaView(viewModel: viewModel, categoriaId: categoria.item.id),
+                          ),
+                        );
+                        },
+                      icon: const Icon(Icons.delete_outline_rounded),
+                      color: Colors.redAccent,
                     ),
 
                     Icon(Icons.keyboard_arrow_down_rounded),
@@ -99,26 +100,20 @@ class CategoriaView extends StatelessWidget {
                   height: 42,
 
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
                     borderRadius: BorderRadius.circular(12),
                   ),
 
-                  child: const Icon(Icons.folder_outlined, color: Colors.blue),
+                  child:  Icon(Icons.folder_outlined, color: ColorScheme.of(context).primary),
                 ),
 
-                title: Text(
-                  categoria.name,
+                title: Text(    
+                  categoria.item.name,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
 
-                subtitle: Text(
-                  categoria.produtos > 0
-                      ? '${categoria.produtos} produtos'
-                      : 'Sem produtos',
-                ),
 
                 children: [
                   ...categoria.children.map(
@@ -128,7 +123,7 @@ class CategoriaView extends StatelessWidget {
                       padding: const EdgeInsets.all(14),
 
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
+                      
                         borderRadius: BorderRadius.circular(14),
 
                         border: Border.all(color: Colors.grey.shade200),
@@ -138,7 +133,7 @@ class CategoriaView extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.subdirectory_arrow_right_rounded,
-                            color: Colors.grey.shade600,
+
                           ),
 
                           const SizedBox(width: 12),
@@ -157,32 +152,23 @@ class CategoriaView extends StatelessWidget {
 
                                 const SizedBox(height: 4),
 
-                                Text(
-                                  '${sub.produtos} produtos',
-
-                                  style: TextStyle(
-                                    color: Colors.grey.shade600,
-                                    fontSize: 13,
-                                  ),
-                                ),
+                              
                               ],
                             ),
                           ),
 
-                          PopupMenuButton(
-                            itemBuilder:
-                                (_) => const [
-                                  PopupMenuItem(
-                                    value: 'edit',
-                                    child: Text('Editar'),
-                                  ),
-
-                                  PopupMenuItem(
-                                    value: 'delete',
-                                    child: Text('Excluir'),
-                                  ),
-                                ],
+                          IconButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => DeleteCategoriaView(viewModel: viewModel, categoriaId: categoria.item.id),
                           ),
+                        );
+                        },
+                        icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                        color: Colors.redAccent,
+                      ),
                         ],
                       ),
                     ),

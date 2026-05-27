@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'movimentacao_model.dart';
+import 'services/movimentacao_service.dart';
 
 class MovimentacoesDetailPage extends StatelessWidget {
   final Movimentacao movimentacao;
@@ -170,39 +171,54 @@ class MovimentacoesDetailPage extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Excluir movimentação?'),
-        content: Text(
-          'Tem certeza que deseja excluir a movimentação de "${movimentacao.produto}"? Esta ação não poderá ser desfeita.',
+void _confirmDelete(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Excluir movimentação?'),
+      content: Text(
+        'Tem certeza que deseja excluir a movimentação de "${movimentacao.produto}"? Esta ação não poderá ser desfeita.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Cancelar'),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar'),
+        FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFFC62828),
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFC62828),
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
+          onPressed: () async {
+            Navigator.pop(ctx);
+            try {
+              await MovimentacaoService().deletar(movimentacao.id);
+              if (!context.mounted) return;
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Kkkk fiz isso ainda n man'),
+                  content: Text('Movimentação excluída com sucesso.'),
                   behavior: SnackBarBehavior.floating,
+                  backgroundColor: Color(0xFF2E7D32),
                 ),
               );
-            },
-            child: const Text('Excluir'),
-          ),
-        ],
-      ),
-    );
-  }
+            } catch (e) {
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Erro ao excluir: $e'),
+                  behavior: SnackBarBehavior.floating,
+                  backgroundColor: const Color(0xFFC62828),
+                ),
+              );
+            }
+          },
+          child: const Text('Excluir'),
+        ),
+      ],
+    ),
+  );
+}
+
 }
 
 // Widgets internos

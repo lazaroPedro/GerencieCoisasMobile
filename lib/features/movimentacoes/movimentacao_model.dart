@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 enum TipoMovimentacao { entrada, saida }
  
 class Movimentacao {
-  final int id;
+  final String id;
   final String produto;
   final String fornecedor;
   final String categoria;
@@ -24,6 +24,33 @@ class Movimentacao {
     required this.data,
     this.observacao,
   });
+
+  Map<String, dynamic> toMap() {
+  return {
+    'produto': produto,
+    'fornecedor': fornecedor,
+    'categoria': categoria,
+    'tipo': tipo.name,           // "entrada" ou "saida"
+    'quantidade': quantidade,
+    'valorUnitario': valorUnitario,
+    'data': data.toIso8601String(),
+    'observacao': observacao,
+  };
+}
+
+factory Movimentacao.fromMap(String id, Map<String, dynamic> map) {
+  return Movimentacao(
+    id: id,
+    produto: map['produto'],
+    fornecedor: map['fornecedor'],
+    categoria: map['categoria'],
+    tipo: TipoMovimentacao.values.byName(map['tipo']),
+    quantidade: map['quantidade'],
+    valorUnitario: (map['valorUnitario'] as num).toDouble(),
+    data: DateTime.parse(map['data']),
+    observacao: map['observacao'],
+  );
+}
  
   double get valorTotal => quantidade * valorUnitario;
  
@@ -43,9 +70,9 @@ class Movimentacao {
 }
  
 // Dados falsos
-final List<Movimentacao> movimentacoesFake = [
+/*final List<Movimentacao> movimentacoesFake = [
   Movimentacao(
-    id: 1,
+    id: '1',
     produto: 'Notebook Dell Inspiron 15',
     fornecedor: 'Tech Distribuidora Ltda',
     categoria: 'Eletrônicos',
@@ -56,7 +83,7 @@ final List<Movimentacao> movimentacoesFake = [
     observacao: 'Recebimento do pedido #4512. Todos os itens conferidos e aprovados.',
   ),
   Movimentacao(
-    id: 2,
+    id: '2',
     produto: 'Mouse sem fio Logitech M705',
     fornecedor: 'InfoShop Comércio',
     categoria: 'Periféricos',
@@ -67,7 +94,7 @@ final List<Movimentacao> movimentacoesFake = [
     observacao: 'Venda para cliente corporativo.',
   ),
   Movimentacao(
-    id: 3,
+    id: '3',
     produto: 'Teclado Mecânico Redragon K552',
     fornecedor: 'Gamer Store',
     categoria: 'Periféricos',
@@ -78,7 +105,7 @@ final List<Movimentacao> movimentacoesFake = [
     observacao: null,
   ),
   Movimentacao(
-    id: 4,
+    id: '4',
     produto: 'Monitor LG 24" Full HD',
     fornecedor: 'Tech Distribuidora Ltda',
     categoria: 'Eletrônicos',
@@ -89,7 +116,7 @@ final List<Movimentacao> movimentacoesFake = [
     observacao: 'Transferência para filial centro.',
   ),
   Movimentacao(
-    id: 5,
+    id: '5',
     produto: 'Cabo HDMI 2m',
     fornecedor: 'Conect Acessórios',
     categoria: 'Acessórios',
@@ -100,7 +127,7 @@ final List<Movimentacao> movimentacoesFake = [
     observacao: null,
   ),
   Movimentacao(
-    id: 6,
+    id: '6',
     produto: 'Headset HyperX Cloud II',
     fornecedor: 'Gamer Store',
     categoria: 'Periféricos',
@@ -111,7 +138,7 @@ final List<Movimentacao> movimentacoesFake = [
     observacao: 'Devolução de cliente – produto com defeito substituído.',
   ),
   Movimentacao(
-    id: 7,
+    id: '7',
     produto: 'SSD Kingston 480GB',
     fornecedor: 'MegaInfo LTDA',
     categoria: 'Armazenamento',
@@ -121,4 +148,4 @@ final List<Movimentacao> movimentacoesFake = [
     data: DateTime(2026, 5, 12, 8, 0),
     observacao: null,
   ),
-];
+];*/

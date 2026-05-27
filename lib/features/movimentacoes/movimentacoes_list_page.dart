@@ -3,6 +3,7 @@ import 'movimentacao_model.dart';
 import 'movimentacoes_detail_page.dart';
 import 'movimentacoes_form_page.dart';
 import 'widgets/movimentacao_card.dart';
+import 'services/movimentacao_service.dart';
 
 class MovimentacoesListPage extends StatefulWidget {
   const MovimentacoesListPage({super.key});
@@ -17,24 +18,38 @@ class _MovimentacoesListPageState extends State<MovimentacoesListPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
-  List<Movimentacao> get _movimentacoesFiltradas {
-    return movimentacoesFake.where((m) {
-      final matchTipo = _filtroTipo == null || m.tipo == _filtroTipo;
-      final matchSearch = _searchQuery.isEmpty ||
-          m.produto.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          m.fornecedor.toLowerCase().contains(_searchQuery.toLowerCase());
-      return matchTipo && matchSearch;
-    }).toList();
-  }
+  List<Movimentacao> _todasMovimentacoes = [];
+    final _service = MovimentacaoService();
+
+    @override
+    void initState() {
+      super.initState();
+      _carregarDados();
+    }
+
+    Future<void> _carregarDados() async {
+      final dados = await _service.listar();
+      setState(() => _todasMovimentacoes = dados);
+    }
+
+    List<Movimentacao> get _movimentacoesFiltradas {
+      return _todasMovimentacoes.where((m) {
+        final matchTipo = _filtroTipo == null || m.tipo == _filtroTipo;
+        final matchSearch = _searchQuery.isEmpty ||
+            m.produto.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            m.fornecedor.toLowerCase().contains(_searchQuery.toLowerCase());
+        return matchTipo && matchSearch;
+      }).toList();
+    }
 
   double get _totalEntradas {
-    return movimentacoesFake
+    return _todasMovimentacoes
         .where((m) => m.tipo == TipoMovimentacao.entrada)
         .fold(0, (sum, m) => sum + m.valorTotal);
   }
 
   double get _totalSaidas {
-    return movimentacoesFake
+    return _todasMovimentacoes
         .where((m) => m.tipo == TipoMovimentacao.saida)
         .fold(0, (sum, m) => sum + m.valorTotal);
   }
@@ -174,7 +189,9 @@ class _MovimentacoesListPageState extends State<MovimentacoesListPage> {
           Expanded(
             child: filtradas.isEmpty
                 ? _EmptyState()
-                : ListView.builder(
+                : RefreshIndicator(
+                  onRefresh: _carregarDados,
+                  child: ListView.builder(
                     padding: const EdgeInsets.only(top: 4, bottom: 100),
                     itemCount: filtradas.length,
                     itemBuilder: (context, index) {
@@ -193,17 +210,19 @@ class _MovimentacoesListPageState extends State<MovimentacoesListPage> {
                       );
                     },
                   ),
+                ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async {
+          await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (_) => const MovimentacoesFormPage(),
             ),
           );
+          _carregarDados();
         },
         icon: const Icon(Icons.add_rounded),
         label: const Text('Nova movimentação'),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../model/produto.dart';
+import '../services/produto_service.dart'; // Importação do serviço adicionada
 
 class ProdutosDetailPage extends StatelessWidget {
   final Produto produto;
@@ -216,16 +217,40 @@ class ProdutosDetailPage extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.danger,
             ),
-            onPressed: () {
+            onPressed: () async {
+              // 1. Fecha o dialog de confirmação
               Navigator.pop(ctx);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Produto excluído.'),
-                  backgroundColor: AppColors.danger,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+              
+              try {
+                // 2. Comunicação com o Firebase para excluir
+                await ProdutoService().deletar(produto.id);
+                
+                if (!context.mounted) return;
+                
+                // 3. Exibe a mensagem de sucesso
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Produto excluído com sucesso.'),
+                    backgroundColor: AppColors.success,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+                
+                // 4. Volta para a página de lista
+                Navigator.pop(context);
+                
+              } catch (e) {
+                if (!context.mounted) return;
+                
+                // 5. Exibe a mensagem de erro caso o Firebase falhe
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Erro ao excluir: $e'),
+                    backgroundColor: AppColors.danger,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
             },
             child: const Text('Excluir'),
           ),
