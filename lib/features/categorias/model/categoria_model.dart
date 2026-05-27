@@ -1,7 +1,7 @@
 class CategoriaModel {
-  final int id;
+  String id;
   final String name;
-  final int parentId;
+  final String? parentId;
 
   CategoriaModel({
     required this.id,

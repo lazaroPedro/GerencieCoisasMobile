@@ -20,7 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final screens = [
       // const Center(child: Text('Dashboard')),
-      const Center(child: Text('Produtos')),
+      const ProdutosListPage(),
        CategoriaView(),
       const MovimentacoesListPage(),
        const ConfigView(),
