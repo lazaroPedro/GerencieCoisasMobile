@@ -70,7 +70,7 @@ factory Movimentacao.fromMap(String id, Map<String, dynamic> map) {
 }
  
 // Dados falsos
-final List<Movimentacao> movimentacoesFake = [
+/*final List<Movimentacao> movimentacoesFake = [
   Movimentacao(
     id: '1',
     produto: 'Notebook Dell Inspiron 15',
@@ -148,4 +148,4 @@ final List<Movimentacao> movimentacoesFake = [
     data: DateTime(2026, 5, 12, 8, 0),
     observacao: null,
   ),
-];
+];*/

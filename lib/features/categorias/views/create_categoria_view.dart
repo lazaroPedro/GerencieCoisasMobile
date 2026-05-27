@@ -74,8 +74,8 @@ class _CreateCategoriaViewState extends State<CreateCategoriaView> {
 
             const SizedBox(height: 20),
 
-            DropdownButtonFormField<String>(
-                    initialValue: parentId,
+            DropdownButtonFormField<String?>(
+                    value: parentId,
 
                     decoration: const InputDecoration(
                       labelText: 'Categoria Pai',
