@@ -178,7 +178,7 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
                     ),
                     items: _produtosReais.map((p) {
                       return DropdownMenuItem<String>(
-                        value: p.id,
+                        value: p.name,
                         child: Text(p.name),
                       );
                     }).toList(),

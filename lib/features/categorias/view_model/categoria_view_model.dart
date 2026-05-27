@@ -17,6 +17,10 @@ class Categoria {
 class CategoriaViewModel extends ChangeNotifier {
   CategoriaRepository repository = CategoriaRepository();
 
+  CategoriaViewModel({CategoriaRepository? repository}) {
+    this.repository = repository ?? CategoriaRepository();
+  }
+
   List<Categoria> categorias = [];
 
   Future<void> loadCategorias() async {

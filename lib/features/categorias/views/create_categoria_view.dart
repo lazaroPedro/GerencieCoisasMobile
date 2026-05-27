@@ -21,25 +21,30 @@ class _CreateCategoriaViewState extends State<CreateCategoriaView> {
   String? parentId;
   bool loading = false;
 
-  Future<void> save() async {
-    if (nameController.text.trim().isEmpty) return;
+Future<void> save() async {
+  if (nameController.text.trim().isEmpty) return;
 
-    setState(() {
-      loading = true;
-    });
+  setState(() => loading = true);
 
+  try {
     final categoria = CategoriaModel(
       id: '',
       name: nameController.text.trim(),
-      parentId: parentId!.isNotEmpty ? parentId : null,
+      parentId: (parentId != null && parentId!.isNotEmpty) ? parentId : null,
     );
 
     await widget.viewModel.addCategoria(categoria);
 
+    if (mounted) Navigator.pop(context);
+  } catch (e) {
     if (mounted) {
-      Navigator.pop(context);
+      setState(() => loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao salvar: $e')),
+      );
     }
   }
+}
   @override
   void initState() {
     super.initState();
@@ -75,7 +80,7 @@ class _CreateCategoriaViewState extends State<CreateCategoriaView> {
             const SizedBox(height: 20),
 
             DropdownButtonFormField<String?>(
-                    value: parentId,
+                    initialValue: parentId,
 
                     decoration: const InputDecoration(
                       labelText: 'Categoria Pai',
