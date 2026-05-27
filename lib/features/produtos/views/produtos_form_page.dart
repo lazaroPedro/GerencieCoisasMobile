@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../model/produto.dart';
+import '../services/produto_service.dart'; // Importando o nosso service
 
 class ProdutosFormPage extends StatefulWidget {
   final Produto? produto;
@@ -21,13 +22,14 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
   late TextEditingController _quantityController;
 
   String? _fornecedorSelecionado;
-  int? _categoriaSelecionada;
+  String? _categoriaSelecionada; // Alterado para String para seguir o padrão do Firebase
   bool _salvando = false;
 
+  // Ajustado os IDs para String
   final List<Map<String, dynamic>> _categorias = [
-    {'id': 1, 'nome': 'Eletrônicos'},
-    {'id': 2, 'nome': 'Periféricos'},
-    {'id': 3, 'nome': 'Armazenamento'},
+    {'id': '1', 'nome': 'Eletrônicos'},
+    {'id': '2', 'nome': 'Periféricos'},
+    {'id': '3', 'nome': 'Armazenamento'},
   ];
 
   final List<String> _fornecedores = [
@@ -64,23 +66,54 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _salvando = true);
-    
-    await Future.delayed(const Duration(milliseconds: 800));
 
-    if (!mounted) return;
-    setState(() => _salvando = false);
+    try {
+      final service = ProdutoService();
+      
+      // Cria o objeto Produto com os dados da tela
+      final produtoParaSalvar = Produto(
+        id: widget.produto?.id ?? '', // Se for edição, mantém o ID. Se for novo, manda vazio.
+        name: _nameController.text,
+        description: _descriptionController.text,
+        quantity: int.parse(_quantityController.text),
+        price: double.parse(_priceController.text.replaceAll(',', '.')),
+        supplier: _fornecedorSelecionado!,
+        categoryId: _categoriaSelecionada!,
+      );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(widget.produto == null 
-            ? 'Produto cadastrado com sucesso!' 
-            : 'Produto atualizado com sucesso!'),
-        backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-    
-    Navigator.pop(context);
+      // Chama o serviço do Firebase (igual o colega fez nas movimentações)
+      await service.salvar(produtoParaSalvar);
+
+      if (!mounted) return;
+      setState(() => _salvando = false);
+
+      // SnackBar de Sucesso
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(widget.produto == null 
+              ? 'Produto cadastrado com sucesso!' 
+              : 'Produto atualizado com sucesso!'),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      
+      // Volta para a lista
+      Navigator.pop(context);
+
+    } catch (e) {
+      // SnackBar de Erro caso a internet caia ou o Firebase reclame
+      if (!mounted) return;
+      setState(() => _salvando = false);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao salvar: $e'),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
@@ -123,7 +156,7 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
                         decoration: _inputDecoration(hint: '0.00'),
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
                         ],
                         validator: (v) => v == null || v.isEmpty ? 'Obrigatório' : null,
                       ),
@@ -152,11 +185,12 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
             ),
             const SizedBox(height: 16),
             _buildLabel('Categoria'),
-            DropdownButtonFormField<int>(
+            // Ajustado para String
+            DropdownButtonFormField<String>(
               value: _categoriaSelecionada,
               decoration: _inputDecoration(hint: 'Selecione a categoria'),
               items: _categorias.map((cat) {
-                return DropdownMenuItem<int>(
+                return DropdownMenuItem<String>(
                   value: cat['id'],
                   child: Text(cat['nome']),
                 );
@@ -190,9 +224,9 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text(
-                        'Salvar Produto',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    : Text(
+                        isEditing ? 'Atualizar Produto' : 'Salvar Produto',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
               ),
             ),
