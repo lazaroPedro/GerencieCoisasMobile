@@ -1,0 +1,99 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/user_location_model.dart';
+import 'location_service.dart';
+import 'package:geolocator/geolocator.dart';
+
+class AuthService {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final LocationService _locationService = LocationService();
+
+  User? get currentUser => _auth.currentUser;
+  Stream<User?> get authStateChanges => _auth.authStateChanges();
+
+  Future<void> register(
+    String email,
+    String password,
+    UserLocationModel location,
+  ) async {
+    final credential = await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+
+    await _firestore.collection('users').doc(credential.user!.uid).set({
+      'email': email,
+      'registeredCity': location.city,
+      'registeredCountry': location.country,
+      'registeredAt': FieldValue.serverTimestamp(),
+      'location': location.toMap(),
+    });
+  }
+
+  Future<void> login(
+    String email,
+    String password,
+    UserLocationModel location,
+  ) async {
+    final credential = await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+
+    final doc =
+        await _firestore.collection('users').doc(credential.user!.uid).get();
+
+    if (!doc.exists) {
+      await _auth.signOut();
+      throw Exception('Dados do usuário não encontrados.');
+    }
+
+    final data = doc.data()!;
+
+    final savedLat = (data['location']['latitude'] as num).toDouble();
+    final savedLng = (data['location']['longitude'] as num).toDouble();
+
+    final distance = Geolocator.distanceBetween(
+      savedLat,
+      savedLng,
+      location.latitude,
+      location.longitude,
+    );
+
+    print('Distância entre cadastro e login: $distance metros');
+
+    const maxDistanceMeters = 5000.0; // 5 km
+
+    if (distance > maxDistanceMeters) {
+      await _auth.signOut();
+
+      throw Exception(
+        'Acesso negado. Você está muito distante do local onde a conta foi criada.',
+      );
+    }
+  }
+
+  Future<void> logout() async {
+    await _auth.signOut();
+  }
+
+  String translateError(String code) {
+    switch (code) {
+      case 'user-not-found':
+        return 'Usuário não encontrado.';
+      case 'wrong-password':
+        return 'Senha incorreta.';
+      case 'email-already-in-use':
+        return 'Este e-mail já está em uso.';
+      case 'invalid-email':
+        return 'E-mail inválido.';
+      case 'weak-password':
+        return 'Senha fraca. Use ao menos 6 caracteres.';
+      case 'invalid-credential':
+        return 'E-mail ou senha incorretos.';
+      default:
+        return 'Erro inesperado: $code';
+    }
+  }
+}

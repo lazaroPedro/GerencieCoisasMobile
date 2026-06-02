@@ -80,7 +80,7 @@ Future<void> save() async {
             const SizedBox(height: 20),
 
             DropdownButtonFormField<String?>(
-                    initialValue: parentId,
+                    value: parentId,
 
                     decoration: const InputDecoration(
                       labelText: 'Categoria Pai',
