@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../core/services/barcode_scanner_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../model/produto.dart';
-import '../services/produto_service.dart'; 
+import '../services/produto_service.dart';
 import '../../categorias/model/categoria_model.dart';
 import '../../categorias/repositories/categoria_repository.dart';
 
@@ -23,8 +24,9 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
   late TextEditingController _priceController;
   late TextEditingController _quantityController;
   late TextEditingController _supplierController;
+  late TextEditingController _barcodeController;
 
-  String? _categoriaSelecionada; 
+  String? _categoriaSelecionada;
   bool _salvando = false;
   bool _carregandoDados = true;
   List<CategoriaModel> _categoriasReais = [];
@@ -32,20 +34,22 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
   @override
   void initState() {
     super.initState();
-    _nameController =
-        TextEditingController(text: widget.produto?.name ?? '');
-    _descriptionController =
-        TextEditingController(text: widget.produto?.description ?? '');
+    _nameController = TextEditingController(text: widget.produto?.name ?? '');
+    _descriptionController = TextEditingController(
+      text: widget.produto?.description ?? '',
+    );
     _priceController = TextEditingController(
-        text: widget.produto != null
-            ? widget.produto!.price.toString()
-            : '');
+      text: widget.produto != null ? widget.produto!.price.toString() : '',
+    );
     _quantityController = TextEditingController(
-        text: widget.produto != null
-            ? widget.produto!.quantity.toString()
-            : '');
-    _supplierController =
-        TextEditingController(text: widget.produto?.supplier ?? '');
+      text: widget.produto != null ? widget.produto!.quantity.toString() : '',
+    );
+    _supplierController = TextEditingController(
+      text: widget.produto?.supplier ?? '',
+    );
+    _barcodeController = TextEditingController(
+      text: widget.produto?.barcode ?? '',
+    );
     _categoriaSelecionada = widget.produto?.categoryId;
     _carregarDadosIniciais();
   }
@@ -73,7 +77,15 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
     _priceController.dispose();
     _quantityController.dispose();
     _supplierController.dispose();
+    _barcodeController.dispose();
     super.dispose();
+  }
+
+  Future<void> _lerCodigoDeBarras() async {
+    final barcode = await BarcodeScannerService().scanBarcode(context);
+    if (barcode == null || !mounted) return;
+
+    setState(() => _barcodeController.text = barcode);
   }
 
   void _salvar() async {
@@ -83,7 +95,7 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
 
     try {
       final service = ProdutoService();
-      
+
       // Cria o objeto Produto com os dados da tela
       final produtoParaSalvar = Produto(
         id: widget.produto?.id ?? '',
@@ -93,6 +105,10 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
         price: double.parse(_priceController.text.replaceAll(',', '.')),
         supplier: _supplierController.text.trim(),
         categoryId: _categoriaSelecionada!,
+        barcode:
+            _barcodeController.text.trim().isEmpty
+                ? null
+                : _barcodeController.text.trim(),
       );
 
       await service.salvar(produtoParaSalvar);
@@ -102,20 +118,21 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(widget.produto == null 
-              ? 'Produto cadastrado com sucesso!' 
-              : 'Produto atualizado com sucesso!'),
+          content: Text(
+            widget.produto == null
+                ? 'Produto cadastrado com sucesso!'
+                : 'Produto atualizado com sucesso!',
+          ),
           backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
         ),
       );
-      
-      Navigator.pop(context);
 
+      Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
       setState(() => _salvando = false);
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Erro ao salvar: $e'),
@@ -143,16 +160,20 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
             TextFormField(
               controller: _nameController,
               decoration: _inputDecoration(hint: 'Nome do produto'),
-              validator: (v) =>
-                  v == null || v.trim().isEmpty ? 'Campo obrigatório' : null,
+              validator:
+                  (v) =>
+                      v == null || v.trim().isEmpty
+                          ? 'Campo obrigatório'
+                          : null,
             ),
             const SizedBox(height: 16),
 
             _buildLabel('Descrição'),
             TextFormField(
               controller: _descriptionController,
-              decoration:
-                  _inputDecoration(hint: 'Descrição detalhada do produto...'),
+              decoration: _inputDecoration(
+                hint: 'Descrição detalhada do produto...',
+              ),
               maxLines: 3,
             ),
             const SizedBox(height: 16),
@@ -169,13 +190,14 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
                         controller: _priceController,
                         decoration: _inputDecoration(hint: '0.00'),
                         keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
+                          decimal: true,
+                        ),
                         inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                              RegExp(r'[0-9.,]')),
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
                         ],
-                        validator: (v) =>
-                            v == null || v.isEmpty ? 'Obrigatório' : null,
+                        validator:
+                            (v) =>
+                                v == null || v.isEmpty ? 'Obrigatório' : null,
                       ),
                     ],
                   ),
@@ -193,8 +215,9 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
                         ],
-                        validator: (v) =>
-                            v == null || v.isEmpty ? 'Obrigatório' : null,
+                        validator:
+                            (v) =>
+                                v == null || v.isEmpty ? 'Obrigatório' : null,
                       ),
                     ],
                   ),
@@ -203,25 +226,40 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
             ),
             const SizedBox(height: 16),
 
+            _buildLabel('Código de barras'),
+            TextFormField(
+              controller: _barcodeController,
+              decoration: _inputDecoration(
+                hint: 'Digite ou leia o código',
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.qr_code_scanner_rounded),
+                  tooltip: 'Ler código de barras',
+                  onPressed: _lerCodigoDeBarras,
+                ),
+              ),
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            ),
+            const SizedBox(height: 16),
+
             // Categoria (dropdown do Firebase)
             _buildLabel('Categoria'),
             _carregandoDados
                 ? const Center(child: CircularProgressIndicator())
                 : DropdownButtonFormField<String>(
-                    value: _categoriaSelecionada,
-                    decoration:
-                        _inputDecoration(hint: 'Selecione a categoria'),
-                    items: _categoriasReais.map((cat) {
-                      return DropdownMenuItem<String>(
-                        value: cat.id,
-                        child: Text(cat.name),
-                      );
-                    }).toList(),
-                    onChanged: (v) =>
-                        setState(() => _categoriaSelecionada = v),
-                    validator: (v) =>
-                        v == null ? 'Selecione uma categoria' : null,
-                  ),
+                  value: _categoriaSelecionada,
+                  decoration: _inputDecoration(hint: 'Selecione a categoria'),
+                  items:
+                      _categoriasReais.map((cat) {
+                        return DropdownMenuItem<String>(
+                          value: cat.id,
+                          child: Text(cat.name),
+                        );
+                      }).toList(),
+                  onChanged: (v) => setState(() => _categoriaSelecionada = v),
+                  validator:
+                      (v) => v == null ? 'Selecione uma categoria' : null,
+                ),
             const SizedBox(height: 16),
 
             // Fornecedor (texto livre)
@@ -229,8 +267,11 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
             TextFormField(
               controller: _supplierController,
               decoration: _inputDecoration(hint: 'Nome do fornecedor'),
-              validator: (v) =>
-                  v == null || v.trim().isEmpty ? 'Campo obrigatório' : null,
+              validator:
+                  (v) =>
+                      v == null || v.trim().isEmpty
+                          ? 'Campo obrigatório'
+                          : null,
             ),
             const SizedBox(height: 32),
 
@@ -239,20 +280,23 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
               height: 50,
               child: ElevatedButton(
                 onPressed: _salvando ? null : _salvar,
-                child: _salvando
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
+                child:
+                    _salvando
+                        ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                        : Text(
+                          isEditing ? 'Atualizar Produto' : 'Salvar Produto',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      )
-                    : Text(
-                        isEditing ? 'Atualizar Produto' : 'Salvar Produto',
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
               ),
             ),
           ],
@@ -275,14 +319,14 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
     );
   }
 
-  InputDecoration _inputDecoration({required String hint}) {
+  InputDecoration _inputDecoration({required String hint, Widget? suffixIcon}) {
     return InputDecoration(
       hintText: hint,
       hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
+      suffixIcon: suffixIcon,
       filled: true,
       fillColor: AppColors.surface,
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
         borderSide: const BorderSide(color: AppColors.border),

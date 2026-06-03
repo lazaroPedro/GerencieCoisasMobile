@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../core/services/barcode_scanner_service.dart';
 import 'movimentacao_model.dart';
 import 'services/movimentacao_service.dart';
 import '../produtos/model/produto.dart';
@@ -16,7 +17,8 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
   final _formKey = GlobalKey<FormState>();
 
   TipoMovimentacao _tipo = TipoMovimentacao.entrada;
-  String? _produtoSelecionado;
+  String? _produtoSelecionadoId;
+  final _barcodeController = TextEditingController();
   final _fornecedorController = TextEditingController();
   final _quantidadeController = TextEditingController();
   final _valorController = TextEditingController();
@@ -48,8 +50,64 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
     }
   }
 
+  Produto? get _produtoSelecionado {
+    if (_produtoSelecionadoId == null) return null;
+
+    for (final produto in _produtosReais) {
+      if (produto.id == _produtoSelecionadoId) return produto;
+    }
+
+    return null;
+  }
+
+  Produto? _produtoPorCodigo(String barcode) {
+    final codigo = barcode.trim();
+    if (codigo.isEmpty) return null;
+
+    for (final produto in _produtosReais) {
+      if (produto.barcode == codigo) return produto;
+    }
+
+    return null;
+  }
+
+  void _preencherProduto(Produto produto) {
+    setState(() {
+      _produtoSelecionadoId = produto.id;
+      _barcodeController.text = produto.barcode ?? '';
+      _fornecedorController.text = produto.supplier;
+      _valorController.text = produto.price.toStringAsFixed(2);
+    });
+  }
+
+  void _selecionarProdutoPorCodigo(String barcode) {
+    final produto = _produtoPorCodigo(barcode);
+
+    if (produto != null) {
+      _preencherProduto(produto);
+      return;
+    }
+
+    setState(() => _barcodeController.text = barcode.trim());
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Nenhum produto encontrado com esse código.'),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Color(0xFFC62828),
+      ),
+    );
+  }
+
+  Future<void> _lerCodigoDeBarras() async {
+    final barcode = await BarcodeScannerService().scanBarcode(context);
+    if (barcode == null || !mounted) return;
+
+    _selecionarProdutoPorCodigo(barcode);
+  }
+
   @override
   void dispose() {
+    _barcodeController.dispose();
     _fornecedorController.dispose();
     _quantidadeController.dispose();
     _valorController.dispose();
@@ -61,22 +119,31 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _salvando = true);
+    final produtoSelecionado = _produtoSelecionado;
 
     try {
       final service = MovimentacaoService();
-      await service.salvar(Movimentacao(
-        id: '',
-        produto: _produtoSelecionado!,
-        fornecedor: _fornecedorController.text.trim(),
-        categoria: 'sem categoria',
-        tipo: _tipo,
-        quantidade: int.parse(_quantidadeController.text),
-        valorUnitario: double.parse(_valorController.text.replaceAll(',', '.')),
-        data: DateTime.now(),
-        observacao: _observacaoController.text.isEmpty
-            ? null
-            : _observacaoController.text,
-      ));
+      await service.salvar(
+        Movimentacao(
+          id: '',
+          produto: produtoSelecionado!.name,
+          fornecedor: _fornecedorController.text.trim(),
+          categoria:
+              produtoSelecionado.categoryId.isEmpty
+                  ? 'sem categoria'
+                  : produtoSelecionado.categoryId,
+          tipo: _tipo,
+          quantidade: int.parse(_quantidadeController.text),
+          valorUnitario: double.parse(
+            _valorController.text.replaceAll(',', '.'),
+          ),
+          data: DateTime.now(),
+          observacao:
+              _observacaoController.text.isEmpty
+                  ? null
+                  : _observacaoController.text,
+        ),
+      );
 
       if (!mounted) return;
       setState(() => _salvando = false);
@@ -144,8 +211,8 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
                     color: const Color(0xFF2E7D32),
                     background: const Color(0xFFE8F5E9),
                     selected: isEntrada,
-                    onTap: () =>
-                        setState(() => _tipo = TipoMovimentacao.entrada),
+                    onTap:
+                        () => setState(() => _tipo = TipoMovimentacao.entrada),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -156,11 +223,47 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
                     color: const Color(0xFFC62828),
                     background: const Color(0xFFFFEBEE),
                     selected: !isEntrada,
-                    onTap: () =>
-                        setState(() => _tipo = TipoMovimentacao.saida),
+                    onTap: () => setState(() => _tipo = TipoMovimentacao.saida),
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 20),
+
+            _SectionLabel(label: 'Código de barras'),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _barcodeController,
+              decoration: _inputDecoration(
+                context,
+                hint: 'Leia ou digite o código',
+                prefixIcon: Icons.qr_code_rounded,
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.qr_code_scanner_rounded),
+                  tooltip: 'Ler código de barras',
+                  onPressed: _carregandoDados ? null : _lerCodigoDeBarras,
+                ),
+              ),
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              onFieldSubmitted:
+                  _carregandoDados
+                      ? null
+                      : (value) => _selecionarProdutoPorCodigo(value),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 48,
+              child: OutlinedButton.icon(
+                onPressed: _carregandoDados ? null : _lerCodigoDeBarras,
+                icon: const Icon(Icons.qr_code_scanner_rounded),
+                label: const Text('Começar lendo código de barras'),
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 20),
 
@@ -170,22 +273,30 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
             _carregandoDados
                 ? const Center(child: CircularProgressIndicator())
                 : DropdownButtonFormField<String>(
-                    value: _produtoSelecionado,
-                    decoration: _inputDecoration(
-                      context,
-                      hint: 'Selecione o produto',
-                      prefixIcon: Icons.inventory_2_outlined,
-                    ),
-                    items: _produtosReais.map((p) {
-                      return DropdownMenuItem<String>(
-                        value: p.name,
-                        child: Text(p.name),
-                      );
-                    }).toList(),
-                    onChanged: (v) => setState(() => _produtoSelecionado = v),
-                    validator: (v) =>
-                        v == null ? 'Selecione um produto' : null,
+                  value: _produtoSelecionadoId,
+                  decoration: _inputDecoration(
+                    context,
+                    hint: 'Selecione o produto',
+                    prefixIcon: Icons.inventory_2_outlined,
                   ),
+                  items:
+                      _produtosReais.map((p) {
+                        return DropdownMenuItem<String>(
+                          value: p.id,
+                          child: Text(p.name),
+                        );
+                      }).toList(),
+                  onChanged: (v) {
+                    if (v == null) {
+                      setState(() => _produtoSelecionadoId = null);
+                      return;
+                    }
+
+                    final produto = _produtosReais.firstWhere((p) => p.id == v);
+                    _preencherProduto(produto);
+                  },
+                  validator: (v) => v == null ? 'Selecione um produto' : null,
+                ),
             const SizedBox(height: 16),
 
             // Fornecedor (texto livre)
@@ -198,8 +309,11 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
                 hint: 'Nome do fornecedor',
                 prefixIcon: Icons.store_outlined,
               ),
-              validator: (v) =>
-                  v == null || v.trim().isEmpty ? 'Campo obrigatório' : null,
+              validator:
+                  (v) =>
+                      v == null || v.trim().isEmpty
+                          ? 'Campo obrigatório'
+                          : null,
             ),
             const SizedBox(height: 16),
 
@@ -250,10 +364,10 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
                           prefixIcon: Icons.attach_money_rounded,
                         ),
                         keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
+                          decimal: true,
+                        ),
                         inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                              RegExp(r'[0-9.,]')),
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
                         ],
                         validator: (v) {
                           if (v == null || v.isEmpty) return 'Obrigatório';
@@ -288,26 +402,29 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
               height: 52,
               child: FilledButton.icon(
                 onPressed: _salvando ? null : _salvar,
-                icon: _salvando
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
+                icon:
+                    _salvando
+                        ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                        : Icon(
+                          isEntrada
+                              ? Icons.arrow_downward_rounded
+                              : Icons.arrow_upward_rounded,
                         ),
-                      )
-                    : Icon(
-                        isEntrada
-                            ? Icons.arrow_downward_rounded
-                            : Icons.arrow_upward_rounded,
-                      ),
                 label: Text(
                   _salvando
                       ? 'Salvando...'
                       : 'Registrar ${isEntrada ? 'Entrada' : 'Saída'}',
                   style: const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 16),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
                 ),
                 style: FilledButton.styleFrom(
                   backgroundColor: tipoColor,
@@ -328,24 +445,23 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
     BuildContext context, {
     required String hint,
     required IconData prefixIcon,
+    Widget? suffixIcon,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     return InputDecoration(
       hintText: hint,
       prefixIcon: Icon(prefixIcon, size: 20),
+      suffixIcon: suffixIcon,
       filled: true,
       fillColor: colorScheme.surface,
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide:
-            BorderSide(color: colorScheme.outline.withOpacity(0.3)),
+        borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.3)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide:
-            BorderSide(color: colorScheme.outline.withOpacity(0.3)),
+        borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.3)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -369,9 +485,9 @@ class _SectionLabel extends StatelessWidget {
     return Text(
       label,
       style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-          ),
+        fontWeight: FontWeight.w600,
+        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+      ),
     );
   }
 }
@@ -405,19 +521,19 @@ class _TipoButton extends StatelessWidget {
           color: selected ? color : colorScheme.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color:
-                selected ? color : colorScheme.outline.withOpacity(0.3),
+            color: selected ? color : colorScheme.outline.withOpacity(0.3),
             width: selected ? 2 : 1,
           ),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: color.withOpacity(0.25),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  )
-                ]
-              : [],
+          boxShadow:
+              selected
+                  ? [
+                    BoxShadow(
+                      color: color.withOpacity(0.25),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                  : [],
         ),
         child: Column(
           children: [

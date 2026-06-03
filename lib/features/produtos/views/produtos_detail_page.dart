@@ -66,7 +66,11 @@ class ProdutosDetailPage extends StatelessWidget {
                           color: AppColors.hoverBg,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.inventory_2_rounded, color: AppColors.primary, size: 26),
+                        child: const Icon(
+                          Icons.inventory_2_rounded,
+                          color: AppColors.primary,
+                          size: 26,
+                        ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -86,10 +90,7 @@ class ProdutosDetailPage extends StatelessWidget {
                   const SizedBox(height: 16),
                   const Text(
                     'Preço de Venda',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textMuted,
-                    ),
+                    style: TextStyle(fontSize: 13, color: AppColors.textMuted),
                   ),
                   Text(
                     _precoFormatado,
@@ -136,14 +137,13 @@ class ProdutosDetailPage extends StatelessWidget {
               icon: Icons.info_outline_rounded,
               children: [
                 _InfoRow(label: 'ID no Sistema', value: '#${produto.id}'),
-                _InfoRow(label: 'ID Categoria', value: '${produto.categoryId}'),
+                _InfoRow(label: 'ID Categoria', value: produto.categoryId),
+                if (produto.barcode != null && produto.barcode!.isNotEmpty)
+                  _InfoRow(label: 'Código de barras', value: produto.barcode!),
                 const SizedBox(height: 8),
                 const Text(
                   'Descrição',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textMuted,
-                  ),
+                  style: TextStyle(fontSize: 13, color: AppColors.textMuted),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -160,9 +160,7 @@ class ProdutosDetailPage extends StatelessWidget {
             _SectionCard(
               title: 'Fornecedor',
               icon: Icons.local_shipping_rounded,
-              children: [
-                _InfoRow(label: 'Empresa', value: produto.supplier),
-              ],
+              children: [_InfoRow(label: 'Empresa', value: produto.supplier)],
             ),
             const SizedBox(height: 32),
             SizedBox(
@@ -170,7 +168,10 @@ class ProdutosDetailPage extends StatelessWidget {
               height: 50,
               child: OutlinedButton.icon(
                 onPressed: () => _confirmDelete(context),
-                icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger),
+                icon: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: AppColors.danger,
+                ),
                 label: const Text(
                   'Excluir Produto',
                   style: TextStyle(
@@ -197,65 +198,73 @@ class ProdutosDetailPage extends StatelessWidget {
   void _confirmDelete(BuildContext context) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        title: const Text(
-          'Excluir produto?',
-          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
-        ),
-        content: Text(
-          'Tem certeza que deseja excluir "${produto.name}" do sistema? Esta ação não poderá ser desfeita.',
-          style: const TextStyle(color: AppColors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar', style: TextStyle(color: AppColors.textMuted)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.danger,
+      builder:
+          (ctx) => AlertDialog(
+            backgroundColor: AppColors.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
             ),
-            onPressed: () async {
-              // 1. Fecha o dialog de confirmação
-              Navigator.pop(ctx);
-              
-              try {
-                // 2. Comunicação com o Firebase para excluir
-                await ProdutoService().deletar(produto.id);
-                
-                if (!context.mounted) return;
-                
-                // 3. Exibe a mensagem de sucesso
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Produto excluído com sucesso.'),
-                    backgroundColor: AppColors.success,
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-                
-                // 4. Volta para a página de lista
-                Navigator.pop(context);
-                
-              } catch (e) {
-                if (!context.mounted) return;
-                
-                // 5. Exibe a mensagem de erro caso o Firebase falhe
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Erro ao excluir: $e'),
-                    backgroundColor: AppColors.danger,
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              }
-            },
-            child: const Text('Excluir'),
+            title: const Text(
+              'Excluir produto?',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            content: Text(
+              'Tem certeza que deseja excluir "${produto.name}" do sistema? Esta ação não poderá ser desfeita.',
+              style: const TextStyle(color: AppColors.textSecondary),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text(
+                  'Cancelar',
+                  style: TextStyle(color: AppColors.textMuted),
+                ),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.danger,
+                ),
+                onPressed: () async {
+                  // 1. Fecha o dialog de confirmação
+                  Navigator.pop(ctx);
+
+                  try {
+                    // 2. Comunicação com o Firebase para excluir
+                    await ProdutoService().deletar(produto.id);
+
+                    if (!context.mounted) return;
+
+                    // 3. Exibe a mensagem de sucesso
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Produto excluído com sucesso.'),
+                        backgroundColor: AppColors.success,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+
+                    // 4. Volta para a página de lista
+                    Navigator.pop(context);
+                  } catch (e) {
+                    if (!context.mounted) return;
+
+                    // 5. Exibe a mensagem de erro caso o Firebase falhe
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Erro ao excluir: $e'),
+                        backgroundColor: AppColors.danger,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Excluir'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }
@@ -265,7 +274,11 @@ class _SectionCard extends StatelessWidget {
   final IconData icon;
   final List<Widget> children;
 
-  const _SectionCard({required this.title, required this.icon, required this.children});
+  const _SectionCard({
+    required this.title,
+    required this.icon,
+    required this.children,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -320,20 +333,19 @@ class _InfoRow extends StatelessWidget {
             width: 120,
             child: Text(
               label,
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.textMuted,
-              ),
+              style: const TextStyle(fontSize: 13, color: AppColors.textMuted),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: valueStyle ?? const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
+              style:
+                  valueStyle ??
+                  const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textPrimary,
+                  ),
             ),
           ),
         ],

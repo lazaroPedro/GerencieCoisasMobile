@@ -5,7 +5,8 @@ class Produto {
   final int quantity;
   final double price;
   final String supplier;  
-  final String categoryId; // Mudou para String para seguir o padrão Firebase
+  final String categoryId;
+  final String? barcode; 
 
   Produto({
     required this.id,
@@ -15,6 +16,7 @@ class Produto {
     required this.price,
     required this.supplier,
     required this.categoryId,
+    this.barcode,
   });
 
   // Converte o objeto Produto para um formato que o Firebase entende
@@ -26,6 +28,7 @@ class Produto {
       'price': price,
       'supplier': supplier,
       'categoryId': categoryId,
+      'barcode': barcode,
     };
   }
 
@@ -39,6 +42,7 @@ class Produto {
       price: (map['price'] as num).toDouble(),
       supplier: map['supplier'] ?? '',
       categoryId: map['categoryId'] ?? '',
+      barcode: map['barcode'],
     );
   }
 }

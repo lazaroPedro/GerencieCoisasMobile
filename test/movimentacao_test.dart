@@ -9,15 +9,17 @@ void main() {
   test('Produtos - Deve retornar a lista de produtos cadastrados', () async {
     final service = MockProdutoService();
     final produtosMockados = [
-      Produto(id: 'p1', name: 'Notebook', quantity: 5, price: 3500.0, categoryId: '1'),
+      Produto(id: 'p1', name: 'Notebook', quantity: 5, price: 3500.0, categoryId: '1', supplier: 'Fornecedor A', description: 'Notebook de última geração'),
     ];
 
-    when(() => service.getProdutos()).thenAnswer((_) async => produtosMockados);
+    when(() => service.listar()).thenAnswer((_) async => produtosMockados);
 
-    final resultado = await service.getProdutos();
+    final resultado = await service.listar();
 
     expect(resultado.length, 1);
     expect(resultado.first.name, 'Notebook');
     expect(resultado.first.quantity, 5);
+    expect(resultado.first.supplier, 'Fornecedor A');
+    expect(resultado.first.description, 'Notebook de última geração');
   });
 }

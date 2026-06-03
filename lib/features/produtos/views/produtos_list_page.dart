@@ -16,7 +16,7 @@ class ProdutosListPage extends StatefulWidget {
 class _ProdutosListPageState extends State<ProdutosListPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  
+
   // Lista vazia que vai receber os dados reais do Firebase
   List<Produto> _todosProdutos = [];
   final _service = ProdutoService();
@@ -38,7 +38,8 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
     if (_searchQuery.isEmpty) return _todosProdutos;
     return _todosProdutos.where((p) {
       return p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-             p.supplier.toLowerCase().contains(_searchQuery.toLowerCase());
+          p.supplier.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          (p.barcode?.contains(_searchQuery) ?? false);
     }).toList();
   }
 
@@ -72,22 +73,29 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: SearchBar(
               controller: _searchController,
-              hintText: 'Buscar produto ou fornecedor...',
+              hintText: 'Buscar produto, fornecedor ou código...',
               hintStyle: const WidgetStatePropertyAll(
                 TextStyle(color: AppColors.textMuted, fontSize: 14),
               ),
-              leading: const Icon(Icons.search_rounded, color: AppColors.textMuted),
-              trailing: _searchQuery.isNotEmpty
-                  ? [
-                      IconButton(
-                        icon: const Icon(Icons.close_rounded, color: AppColors.textMuted),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() => _searchQuery = '');
-                        },
-                      ),
-                    ]
-                  : null,
+              leading: const Icon(
+                Icons.search_rounded,
+                color: AppColors.textMuted,
+              ),
+              trailing:
+                  _searchQuery.isNotEmpty
+                      ? [
+                        IconButton(
+                          icon: const Icon(
+                            Icons.close_rounded,
+                            color: AppColors.textMuted,
+                          ),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                          },
+                        ),
+                      ]
+                      : null,
               onChanged: (v) => setState(() => _searchQuery = v),
               elevation: const WidgetStatePropertyAll(0),
               backgroundColor: const WidgetStatePropertyAll(AppColors.surface),
@@ -113,31 +121,39 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
             ),
           ),
           Expanded(
-            child: filtrados.isEmpty
-                ? const Center(
-                    child: Text(
-                      'Nenhum produto encontrado.',
-                      style: TextStyle(color: AppColors.textMuted),
-                    ),
-                  )
-                // Adicionado o RefreshIndicator para permitir recarregar a lista puxando para baixo
-                : RefreshIndicator(
-                    onRefresh: _carregarDados,
-                    child: ListView.separated(
-                        padding: const EdgeInsets.only(top: 8, bottom: 100, left: 16, right: 16),
+            child:
+                filtrados.isEmpty
+                    ? const Center(
+                      child: Text(
+                        'Nenhum produto encontrado.',
+                        style: TextStyle(color: AppColors.textMuted),
+                      ),
+                    )
+                    // Adicionado o RefreshIndicator para permitir recarregar a lista puxando para baixo
+                    : RefreshIndicator(
+                      onRefresh: _carregarDados,
+                      child: ListView.separated(
+                        padding: const EdgeInsets.only(
+                          top: 8,
+                          bottom: 100,
+                          left: 16,
+                          right: 16,
+                        ),
                         itemCount: filtrados.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
                           final produto = filtrados[index];
                           final estoqueBaixo = produto.quantity < 10;
-                    
+
                           return GestureDetector(
                             onTap: () async {
                               // Await para recarregar caso um produto seja excluído ou editado na tela de detalhes
                               await Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => ProdutosDetailPage(produto: produto),
+                                  builder:
+                                      (_) =>
+                                          ProdutosDetailPage(produto: produto),
                                 ),
                               );
                               _carregarDados();
@@ -147,7 +163,9 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
                               decoration: BoxDecoration(
                                 color: AppColors.surface,
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: AppColors.borderLight),
+                                border: Border.all(
+                                  color: AppColors.borderLight,
+                                ),
                               ),
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,15 +177,16 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: const Icon(
-                                      Icons.inventory_2_rounded, 
-                                      color: AppColors.primary, 
+                                      Icons.inventory_2_rounded,
+                                      color: AppColors.primary,
                                       size: 24,
                                     ),
                                   ),
                                   const SizedBox(width: 16),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           produto.name,
@@ -185,9 +204,21 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
                                             fontSize: 13,
                                           ),
                                         ),
+                                        if (produto.barcode != null &&
+                                            produto.barcode!.isNotEmpty) ...[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Código: ${produto.barcode}',
+                                            style: const TextStyle(
+                                              color: AppColors.textMuted,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
                                         const SizedBox(height: 12),
                                         Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
                                           children: [
                                             Text(
                                               _formatarMoeda(produto.price),
@@ -198,26 +229,35 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
                                               ),
                                             ),
                                             Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 4,
+                                                  ),
                                               decoration: BoxDecoration(
-                                                color: estoqueBaixo 
-                                                    ? AppColors.danger.withOpacity(0.1) 
-                                                    : AppColors.success.withOpacity(0.1),
-                                                borderRadius: BorderRadius.circular(6),
+                                                color:
+                                                    estoqueBaixo
+                                                        ? AppColors.danger
+                                                            .withOpacity(0.1)
+                                                        : AppColors.success
+                                                            .withOpacity(0.1),
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
                                               ),
                                               child: Text(
                                                 'Qtd: ${produto.quantity}',
                                                 style: TextStyle(
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.w700,
-                                                  color: estoqueBaixo 
-                                                      ? AppColors.danger 
-                                                      : AppColors.success,
+                                                  color:
+                                                      estoqueBaixo
+                                                          ? AppColors.danger
+                                                          : AppColors.success,
                                                 ),
                                               ),
                                             ),
                                           ],
-                                        )
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -227,7 +267,7 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
                           );
                         },
                       ),
-                  ),
+                    ),
           ),
         ],
       ),
@@ -236,14 +276,15 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
           // Await adicionado aqui também para atualizar a lista ao retornar do formulário
           await Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (_) => const ProdutosFormPage(),
-            ),
+            MaterialPageRoute(builder: (_) => const ProdutosFormPage()),
           );
           _carregarDados();
         },
         icon: const Icon(Icons.add_rounded),
-        label: const Text('Novo Produto', style: TextStyle(fontWeight: FontWeight.bold)),
+        label: const Text(
+          'Novo Produto',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
