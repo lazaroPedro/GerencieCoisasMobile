@@ -36,21 +36,22 @@ class AuthService {
     String password,
     UserLocationModel location,
   ) async {
-    final credential = await _auth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    // 1. Busca o documento pelo email SEM autenticar ainda
+    final query =
+        await _firestore
+            .collection('users')
+            .where('email', isEqualTo: email)
+            .limit(1)
+            .get();
 
-    final doc =
-        await _firestore.collection('users').doc(credential.user!.uid).get();
-
-    if (!doc.exists) {
-      await _auth.signOut();
-      throw Exception('Dados do usuário não encontrados.');
+    if (query.docs.isEmpty) {
+      // Não revela se o email existe ou não — mesma mensagem genérica
+      throw Exception('E-mail ou senha incorretos.');
     }
 
-    final data = doc.data()!;
+    final data = query.docs.first.data();
 
+    // 2. Verifica a distância ANTES de qualquer autenticação
     final savedLat = (data['location']['latitude'] as num).toDouble();
     final savedLng = (data['location']['longitude'] as num).toDouble();
 
@@ -61,17 +62,16 @@ class AuthService {
       location.longitude,
     );
 
-    print('Distância entre cadastro e login: $distance metros');
-
     const maxDistanceMeters = 5000.0; // 5 km
 
     if (distance > maxDistanceMeters) {
-      await _auth.signOut();
-
       throw Exception(
         'Acesso negado. Você está muito distante do local onde a conta foi criada.',
       );
     }
+
+    // 3. Localização OK — agora autentica
+    await _auth.signInWithEmailAndPassword(email: email, password: password);
   }
 
   Future<void> logout() async {
