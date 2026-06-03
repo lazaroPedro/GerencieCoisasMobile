@@ -13,8 +13,12 @@ class ProdutoService {
   }
 
   Future<void> salvar(Produto produto) async {
-    // Se quiser implementar a edição no futuro, dá pra usar _colecao.doc(produto.id).update()
-    await _colecao.add(produto.toMap());
+    if (produto.id.isEmpty) {
+      await _colecao.add(produto.toMap());
+      return;
+    }
+
+    await _colecao.doc(produto.id).update(produto.toMap());
   }
 
   Future<void> deletar(String id) async {
