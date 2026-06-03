@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 import '../services/location_service.dart';
 import '../services/biometria_service.dart';
@@ -48,13 +49,13 @@ class _LoginViewState extends State<LoginView> {
     }
   }
 
+  // LOGIN TRADICIONAL (E-MAIL E SENHA)
   Future<void> _login() async {
     if (_localizacao == null) {
       setState(() => _erro = 'Obtenha sua localização antes de continuar.');
       return;
     }
-    if (_emailController.text.trim().isEmpty ||
-        _passwordController.text.isEmpty) {
+    if (_emailController.text.trim().isEmpty || _passwordController.text.isEmpty) {
       setState(() => _erro = 'Preencha e-mail e senha.');
       return;
     }
@@ -65,12 +66,17 @@ class _LoginViewState extends State<LoginView> {
     });
 
     try {
-      await _authService.login(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
-        _localizacao!,
-      );
-      // Login OK — o StreamBuilder no main.dart redireciona automaticamente
+      final email = _emailController.text.trim();
+      final senha = _passwordController.text.trim();
+
+      await _authService.login(email, senha, _localizacao!);
+      
+      // SALVA AS CREDENCIAIS PARA A BIOMETRIA USAR DEPOIS
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('saved_email', email);
+      await prefs.setString('saved_password', senha);
+
+      // Login OK — o StreamBuilder redireciona
     } on FirebaseAuthException catch (e) {
       setState(() => _erro = _authService.translateError(e.code));
     } catch (e) {
@@ -80,32 +86,55 @@ class _LoginViewState extends State<LoginView> {
     }
   }
 
-  // <-- LOGIN COM BIOMETRIA -->
+  // LOGIN COM BIOMETRIA
   Future<void> _loginComBiometria() async {
     setState(() => _erro = null);
 
-    // 1. Verifica permissão e se o aparelho tem o sensor
+    // 1. Verifica se a digital está configurada no aparelho
     final disponivel = await _biometriaService.podeAutenticar();
     if (!disponivel) {
       setState(() => _erro = 'Biometria não disponível neste aparelho.');
       return;
     }
 
-    // 2. Aciona o sensor
+    // 2. Aciona o sensor na tela
     final sucesso = await _biometriaService.autenticar();
 
     if (sucesso) {
-      if (!mounted) return;
-      // Exibe mensagem de sucesso
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Autenticado com biometria com sucesso!'),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      
-      Navigator.pushReplacementNamed(context, '/home'); 
+      setState(() => _carregando = true);
+      try {
+        // 3. Busca os dados salvos do último login
+        final prefs = await SharedPreferences.getInstance();
+        final savedEmail = prefs.getString('saved_email');
+        final savedPassword = prefs.getString('saved_password');
+
+        if (savedEmail != null && savedPassword != null) {
+          // Garante que temos a localização antes de logar
+          if (_localizacao == null) {
+            await _obterLocalizacao();
+          }
+          
+          // 4. Faz o login no Firebase silenciosamente
+          await _authService.login(savedEmail, savedPassword, _localizacao!);
+          
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Autenticado com biometria com sucesso!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          // Se não tem dados salvos, pede pra logar com senha a primeira vez
+          setState(() => _erro = 'Para usar a biometria, faça login com e-mail e senha a primeira vez.');
+        }
+      } on FirebaseAuthException catch (e) {
+        setState(() => _erro = _authService.translateError(e.code));
+      } catch (e) {
+        setState(() => _erro = e.toString().replaceAll('Exception: ', ''));
+      } finally {
+        if (mounted) setState(() => _carregando = false);
+      }
     } else {
       setState(() => _erro = 'Falha na autenticação biométrica.');
     }

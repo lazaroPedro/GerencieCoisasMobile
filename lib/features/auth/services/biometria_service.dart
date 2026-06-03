@@ -1,6 +1,6 @@
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart'; // Adicionado para usar o debugPrint
+import 'package:flutter/foundation.dart';
 
 class BiometriaService {
   final LocalAuthentication _auth = LocalAuthentication();
