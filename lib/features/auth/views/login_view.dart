@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import '../services/location_service.dart';
+import '../services/biometria_service.dart';
 import '../models/user_location_model.dart';
 import 'register_view.dart';
 
@@ -15,6 +16,7 @@ class LoginView extends StatefulWidget {
 class _LoginViewState extends State<LoginView> {
   final _authService = AuthService();
   final _locationService = LocationService();
+  final _biometriaService = BiometriaService();
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -75,6 +77,37 @@ class _LoginViewState extends State<LoginView> {
       setState(() => _erro = e.toString().replaceAll('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _carregando = false);
+    }
+  }
+
+  // <-- LOGIN COM BIOMETRIA -->
+  Future<void> _loginComBiometria() async {
+    setState(() => _erro = null);
+
+    // 1. Verifica permissão e se o aparelho tem o sensor
+    final disponivel = await _biometriaService.podeAutenticar();
+    if (!disponivel) {
+      setState(() => _erro = 'Biometria não disponível neste aparelho.');
+      return;
+    }
+
+    // 2. Aciona o sensor
+    final sucesso = await _biometriaService.autenticar();
+
+    if (sucesso) {
+      if (!mounted) return;
+      // Exibe mensagem de sucesso
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Autenticado com biometria com sucesso!'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      
+      Navigator.pushReplacementNamed(context, '/home'); 
+    } else {
+      setState(() => _erro = 'Falha na autenticação biométrica.');
     }
   }
 
@@ -177,7 +210,7 @@ class _LoginViewState extends State<LoginView> {
               if (_erro != null) _blocoErro(_erro!, colorScheme),
               if (_erro != null) const SizedBox(height: 16),
 
-              // Botão entrar
+              // Botão entrar tradicional
               SizedBox(
                 height: 52,
                 child: FilledButton.icon(
@@ -207,6 +240,47 @@ class _LoginViewState extends State<LoginView> {
                   ),
                 ),
               ),
+              
+              const SizedBox(height: 16),
+
+              // <-- DIVISOR VISUAL -->
+              Row(
+                children: [
+                  Expanded(child: Divider(color: colorScheme.outline.withOpacity(0.3))),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'OU',
+                      style: TextStyle(color: colorScheme.outline, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Expanded(child: Divider(color: colorScheme.outline.withOpacity(0.3))),
+                ],
+              ),
+              
+              const SizedBox(height: 16),
+
+              // <-- NOVO BOTÃO DE BIOMETRIA -->
+              SizedBox(
+                height: 52,
+                child: OutlinedButton.icon(
+                  onPressed: _carregando ? null : _loginComBiometria,
+                  icon: const Icon(Icons.fingerprint, size: 28),
+                  label: const Text(
+                    'Entrar com a Digital',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ),
+
               const SizedBox(height: 12),
 
               TextButton(
@@ -237,10 +311,10 @@ class _LoginViewState extends State<LoginView> {
         children: [
           const Icon(Icons.location_on, color: Colors.green),
           const SizedBox(width: 8),
-          Expanded(
+          const Expanded(
             child: Text(
               'Localização obtida.',
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.green,
                 fontWeight: FontWeight.w600,
               ),
