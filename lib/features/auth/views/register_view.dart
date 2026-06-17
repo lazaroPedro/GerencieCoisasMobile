@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../services/auth_service.dart';
 import '../services/location_service.dart';
 import '../models/user_location_model.dart';
@@ -40,6 +42,13 @@ class _RegisterViewState extends State<RegisterView> {
     try {
       final loc = await _locationService.getCurrentLocation();
       setState(() => _localizacao = loc);
+      if (mounted) {
+        SemanticsService.sendAnnouncement(
+          View.of(context),
+          'msg_localizacao_sucesso'.tr(), 
+          Directionality.of(context),
+        );
+      }
     } catch (e) {
       setState(() => _erro = e.toString().replaceAll('Exception: ', ''));
     } finally {
@@ -49,16 +58,31 @@ class _RegisterViewState extends State<RegisterView> {
 
   Future<void> _registrar() async {
     if (_localizacao == null) {
-      setState(() => _erro = 'Obtenha sua localização antes de continuar.');
+      setState(() => _erro = 'erro_obter_localizacao'.tr()); 
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        _erro!,
+        Directionality.of(context),
+      );
       return;
     }
     if (_emailController.text.trim().isEmpty ||
         _passwordController.text.isEmpty) {
-      setState(() => _erro = 'Preencha todos os campos.');
+      setState(() => _erro = 'erro_preencher_campos'.tr()); 
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        _erro!,
+        Directionality.of(context),
+      );
       return;
     }
     if (_passwordController.text != _confirmController.text) {
-      setState(() => _erro = 'As senhas não coincidem.');
+      setState(() => _erro = 'erro_senhas_nao_coincidem'.tr()); 
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        _erro!,
+        Directionality.of(context),
+      );
       return;
     }
 
@@ -76,9 +100,9 @@ class _RegisterViewState extends State<RegisterView> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Conta criada com sucesso! Faça login.'),
-          backgroundColor: Color(0xFF2E7D32),
+        SnackBar(
+          content: Text('msg_conta_criada'.tr()), 
+          backgroundColor: const Color(0xFF2E7D32),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -100,9 +124,9 @@ class _RegisterViewState extends State<RegisterView> {
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainerLowest,
       appBar: AppBar(
-        title: const Text(
-          'Criar Conta',
-          style: TextStyle(fontWeight: FontWeight.w700),
+        title: Text(
+          'titulo_criar_conta'.tr(), 
+          style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         backgroundColor: colorScheme.surface,
         surfaceTintColor: Colors.transparent,
@@ -115,9 +139,9 @@ class _RegisterViewState extends State<RegisterView> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Sua cidade atual será vinculada à conta.',
+                'subtitulo_criar_conta'.tr(), 
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurface.withOpacity(0.6),
+                  color: colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
               const SizedBox(height: 24),
@@ -130,17 +154,19 @@ class _RegisterViewState extends State<RegisterView> {
                       vertical: 12,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.1),
+                      color: Colors.green.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.green),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.location_on, color: Colors.green),
+                        const ExcludeSemantics(
+                          child: Icon(Icons.location_on, color: Colors.green),
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Cidade de registro: ${_localizacao!.city}',
+                            'cidade_registro'.tr(args: [_localizacao!.city]), // 
                             style: const TextStyle(
                               color: Colors.green,
                               fontWeight: FontWeight.w600,
@@ -159,36 +185,41 @@ class _RegisterViewState extends State<RegisterView> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                             : const Icon(Icons.my_location),
-                    label: const Text('Obter Localização'),
+                    label: Text('botao_obter_localizacao'.tr()), 
                     onPressed: _carregando ? null : _obterLocalizacao,
                   ),
 
               const SizedBox(height: 20),
 
-              _labelSecao('E-mail'),
+              _labelSecao('label_email'.tr()), 
               const SizedBox(height: 8),
               TextFormField(
                 controller: _emailController,
+                autofillHints: const [AutofillHints.email],
                 keyboardType: TextInputType.emailAddress,
                 decoration: _inputDecoration(
                   context,
-                  hint: 'seu@email.com',
+                  label: 'label_email'.tr(), 
+                  hint: 'hint_email'.tr(), 
                   icone: Icons.email_outlined,
                 ),
               ),
               const SizedBox(height: 16),
 
-              _labelSecao('Senha'),
+              _labelSecao('label_senha'.tr()), 
               const SizedBox(height: 8),
               TextFormField(
                 controller: _passwordController,
+                autofillHints: const [AutofillHints.newPassword],
                 obscureText: _obscure,
                 decoration: _inputDecoration(
                   context,
-                  hint: '••••••••',
+                  label: 'label_senha'.tr(), 
+                  hint: 'hint_senha'.tr(), 
                   icone: Icons.lock_outline,
                 ).copyWith(
                   suffixIcon: IconButton(
+                    tooltip: _obscure ? 'tooltip_mostrar_senha'.tr() : 'tooltip_ocultar_senha'.tr(), 
                     icon: Icon(
                       _obscure ? Icons.visibility_off : Icons.visibility,
                     ),
@@ -198,29 +229,35 @@ class _RegisterViewState extends State<RegisterView> {
               ),
               const SizedBox(height: 16),
 
-              _labelSecao('Confirmar Senha'),
+              _labelSecao('label_confirmar_senha'.tr()), 
               const SizedBox(height: 8),
               TextFormField(
                 controller: _confirmController,
+                autofillHints: const [AutofillHints.newPassword],
                 obscureText: _obscure,
                 decoration: _inputDecoration(
                   context,
-                  hint: '••••••••',
+                  label: 'label_confirmar_senha'.tr(), 
+                  hint: 'hint_senha'.tr(), 
                   icone: Icons.lock_outline,
                 ),
               ),
               const SizedBox(height: 24),
 
               if (_erro != null)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: colorScheme.errorContainer,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    _erro!,
-                    style: TextStyle(color: colorScheme.onErrorContainer),
+                Semantics(
+                  liveRegion: true,
+                  label: 'erro_prefixo'.tr(args: [_erro!]), 
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: colorScheme.errorContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _erro!,
+                      style: TextStyle(color: colorScheme.onErrorContainer),
+                    ),
                   ),
                 ),
               if (_erro != null) const SizedBox(height: 16),
@@ -241,7 +278,7 @@ class _RegisterViewState extends State<RegisterView> {
                           )
                           : const Icon(Icons.person_add),
                   label: Text(
-                    _carregando ? 'Criando conta...' : 'Criar Conta',
+                    _carregando ? 'botao_criando_conta'.tr() : 'botao_criar_conta'.tr(), 
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 16,
@@ -266,18 +303,20 @@ class _RegisterViewState extends State<RegisterView> {
       label,
       style: Theme.of(context).textTheme.labelLarge?.copyWith(
         fontWeight: FontWeight.w600,
-        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
       ),
     );
   }
 
   InputDecoration _inputDecoration(
     BuildContext context, {
+    required String label,
     required String hint,
     required IconData icone,
   }) {
     final cs = Theme.of(context).colorScheme;
     return InputDecoration(
+      labelText: label,
       hintText: hint,
       prefixIcon: Icon(icone, size: 20),
       filled: true,
@@ -285,11 +324,11 @@ class _RegisterViewState extends State<RegisterView> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: cs.outline.withOpacity(0.3)),
+        borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.3)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: cs.outline.withOpacity(0.3)),
+        borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.3)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

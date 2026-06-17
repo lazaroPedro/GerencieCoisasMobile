@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../core/services/barcode_scanner_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../model/produto.dart';
@@ -96,7 +97,6 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
     try {
       final service = ProdutoService();
 
-      // Cria o objeto Produto com os dados da tela
       final produtoParaSalvar = Produto(
         id: widget.produto?.id ?? '',
         name: _nameController.text.trim(),
@@ -120,8 +120,8 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
         SnackBar(
           content: Text(
             widget.produto == null
-                ? 'Produto cadastrado com sucesso!'
-                : 'Produto atualizado com sucesso!',
+                ? 'msg_produto_cadastrado'.tr()
+                : 'msg_produto_atualizado'.tr(),
           ),
           backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
@@ -135,7 +135,7 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Erro ao salvar: $e'),
+          content: Text('erro_salvar'.tr(args: [e.toString()])),
           backgroundColor: AppColors.danger,
           behavior: SnackBarBehavior.floating,
         ),
@@ -149,30 +149,34 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? 'Editar Produto' : 'Novo Produto'),
+        title: Text(isEditing ? 'titulo_editar_produto'.tr() : 'botao_novo_produto'.tr()),
       ),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _buildLabel('Nome'),
+            _buildLabel('label_nome'.tr()),
             TextFormField(
               controller: _nameController,
-              decoration: _inputDecoration(hint: 'Nome do produto'),
+              decoration: _inputDecoration(
+                label: 'label_nome'.tr(),
+                hint: 'hint_nome_produto'.tr(),
+              ),
               validator:
                   (v) =>
                       v == null || v.trim().isEmpty
-                          ? 'Campo obrigatório'
+                          ? 'erro_campo_obrigatorio'.tr()
                           : null,
             ),
             const SizedBox(height: 16),
 
-            _buildLabel('Descrição'),
+            _buildLabel('label_descricao'.tr()),
             TextFormField(
               controller: _descriptionController,
               decoration: _inputDecoration(
-                hint: 'Descrição detalhada do produto...',
+                label: 'label_descricao'.tr(),
+                hint: 'hint_descricao_produto'.tr(),
               ),
               maxLines: 3,
             ),
@@ -185,10 +189,13 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildLabel('Preço (R\$)'),
+                      _buildLabel('label_preco_rs'.tr()),
                       TextFormField(
                         controller: _priceController,
-                        decoration: _inputDecoration(hint: '0.00'),
+                        decoration: _inputDecoration(
+                          label: 'hint_preco_reais'.tr(),
+                          hint: 'hint_zero_zero'.tr(),
+                        ),
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
@@ -197,7 +204,7 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
                         ],
                         validator:
                             (v) =>
-                                v == null || v.isEmpty ? 'Obrigatório' : null,
+                                v == null || v.isEmpty ? 'erro_obrigatorio'.tr() : null,
                       ),
                     ],
                   ),
@@ -207,17 +214,20 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildLabel('Quantidade'),
+                      _buildLabel('label_quantidade'.tr()),
                       TextFormField(
                         controller: _quantityController,
-                        decoration: _inputDecoration(hint: 'Ex: 10'),
+                        decoration: _inputDecoration(
+                          label: 'label_quantidade'.tr(),
+                          hint: 'hint_ex_10'.tr(),
+                        ),
                         keyboardType: TextInputType.number,
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
                         ],
                         validator:
                             (v) =>
-                                v == null || v.isEmpty ? 'Obrigatório' : null,
+                                v == null || v.isEmpty ? 'erro_obrigatorio'.tr() : null,
                       ),
                     ],
                   ),
@@ -226,14 +236,15 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
             ),
             const SizedBox(height: 16),
 
-            _buildLabel('Código de barras'),
+            _buildLabel('label_codigo_barras'.tr()),
             TextFormField(
               controller: _barcodeController,
               decoration: _inputDecoration(
-                hint: 'Digite ou leia o código',
+                label: 'label_codigo_barras'.tr(),
+                hint: 'hint_digite_leia_codigo'.tr(),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.qr_code_scanner_rounded),
-                  tooltip: 'Ler código de barras',
+                  tooltip: 'tooltip_ler_codigo'.tr(),
                   onPressed: _lerCodigoDeBarras,
                 ),
               ),
@@ -242,13 +253,15 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
             ),
             const SizedBox(height: 16),
 
-            // Categoria (dropdown do Firebase)
-            _buildLabel('Categoria'),
+            _buildLabel('label_categoria'.tr()),
             _carregandoDados
                 ? const Center(child: CircularProgressIndicator())
                 : DropdownButtonFormField<String>(
-                  value: _categoriaSelecionada,
-                  decoration: _inputDecoration(hint: 'Selecione a categoria'),
+                  initialValue: _categoriaSelecionada,
+                  decoration: _inputDecoration(
+                    label: 'label_categoria'.tr(),
+                    hint: 'hint_selecione_categoria'.tr(),
+                  ),
                   items:
                       _categoriasReais.map((cat) {
                         return DropdownMenuItem<String>(
@@ -258,19 +271,21 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
                       }).toList(),
                   onChanged: (v) => setState(() => _categoriaSelecionada = v),
                   validator:
-                      (v) => v == null ? 'Selecione uma categoria' : null,
+                      (v) => v == null ? 'erro_selecione_categoria'.tr() : null,
                 ),
             const SizedBox(height: 16),
 
-            // Fornecedor (texto livre)
-            _buildLabel('Fornecedor'),
+            _buildLabel('label_fornecedor'.tr()),
             TextFormField(
               controller: _supplierController,
-              decoration: _inputDecoration(hint: 'Nome do fornecedor'),
+              decoration: _inputDecoration(
+                label: 'label_fornecedor'.tr(),
+                hint: 'hint_nome_fornecedor'.tr(),
+              ),
               validator:
                   (v) =>
                       v == null || v.trim().isEmpty
-                          ? 'Campo obrigatório'
+                          ? 'erro_campo_obrigatorio'.tr()
                           : null,
             ),
             const SizedBox(height: 32),
@@ -291,7 +306,7 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
                           ),
                         )
                         : Text(
-                          isEditing ? 'Atualizar Produto' : 'Salvar Produto',
+                          isEditing ? 'botao_atualizar_produto'.tr() : 'botao_salvar_produto'.tr(), 
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -319,8 +334,13 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
     );
   }
 
-  InputDecoration _inputDecoration({required String hint, Widget? suffixIcon}) {
+  InputDecoration _inputDecoration({
+    required String label,
+    required String hint,
+    Widget? suffixIcon,
+  }) {
     return InputDecoration(
+      labelText: label,
       hintText: hint,
       hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
       suffixIcon: suffixIcon,

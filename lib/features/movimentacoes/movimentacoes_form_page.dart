@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../core/services/barcode_scanner_service.dart';
 import 'movimentacao_model.dart';
 import 'services/movimentacao_service.dart';
@@ -90,10 +91,10 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
 
     setState(() => _barcodeController.text = barcode.trim());
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Nenhum produto encontrado com esse código.'),
+      SnackBar(
+        content: Text('msg_nenhum_produto_codigo'.tr()),
         behavior: SnackBarBehavior.floating,
-        backgroundColor: Color(0xFFC62828),
+        backgroundColor: const Color(0xFFC62828),
       ),
     );
   }
@@ -150,11 +151,11 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Movimentação registrada com sucesso!'),
+          content: Text('msg_movimentacao_sucesso'.tr()),
           behavior: SnackBarBehavior.floating,
           backgroundColor: const Color(0xFF2E7D32),
           action: SnackBarAction(
-            label: 'OK',
+            label: 'botao_ok'.tr(),
             textColor: Colors.white,
             onPressed: () {},
           ),
@@ -166,7 +167,7 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
       setState(() => _salvando = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Erro ao salvar: $e'),
+          content: Text('erro_salvar'.tr(args: [e.toString()])),
           behavior: SnackBarBehavior.floating,
           backgroundColor: const Color(0xFFC62828),
         ),
@@ -185,9 +186,9 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainerLowest,
       appBar: AppBar(
-        title: const Text(
-          'Nova Movimentação',
-          style: TextStyle(fontWeight: FontWeight.w700),
+        title: Text(
+          'titulo_nova_movimentacao'.tr(),
+          style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         centerTitle: false,
         backgroundColor: colorScheme.surface,
@@ -199,14 +200,13 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Tipo
-            _SectionLabel(label: 'Tipo de movimentação'),
+            _SectionLabel(label: 'label_tipo_movimentacao'.tr()),
             const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
                   child: _TipoButton(
-                    label: 'Entrada',
+                    label: 'label_entrada'.tr(),
                     icon: Icons.arrow_downward_rounded,
                     color: const Color(0xFF2E7D32),
                     background: const Color(0xFFE8F5E9),
@@ -218,7 +218,7 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _TipoButton(
-                    label: 'Saída',
+                    label: 'label_saida'.tr(),
                     icon: Icons.arrow_upward_rounded,
                     color: const Color(0xFFC62828),
                     background: const Color(0xFFFFEBEE),
@@ -230,17 +230,18 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
             ),
             const SizedBox(height: 20),
 
-            _SectionLabel(label: 'Código de barras'),
+            _SectionLabel(label: 'label_codigo_barras'.tr()),
             const SizedBox(height: 8),
             TextFormField(
               controller: _barcodeController,
               decoration: _inputDecoration(
                 context,
-                hint: 'Leia ou digite o código',
+                label: 'label_codigo_barras'.tr(),
+                hint: 'hint_leia_digite_codigo'.tr(),
                 prefixIcon: Icons.qr_code_rounded,
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.qr_code_scanner_rounded),
-                  tooltip: 'Ler código de barras',
+                  tooltip: 'tooltip_ler_codigo'.tr(),
                   onPressed: _carregandoDados ? null : _lerCodigoDeBarras,
                 ),
               ),
@@ -257,7 +258,7 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
               child: OutlinedButton.icon(
                 onPressed: _carregandoDados ? null : _lerCodigoDeBarras,
                 icon: const Icon(Icons.qr_code_scanner_rounded),
-                label: const Text('Começar lendo código de barras'),
+                label: Text('botao_comecar_leitura'.tr()),
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -267,16 +268,16 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
             ),
             const SizedBox(height: 20),
 
-            // Produto (dropdown do Firebase)
-            _SectionLabel(label: 'Produto'),
+            _SectionLabel(label: 'label_produto'.tr()),
             const SizedBox(height: 8),
             _carregandoDados
                 ? const Center(child: CircularProgressIndicator())
                 : DropdownButtonFormField<String>(
-                  value: _produtoSelecionadoId,
+                  initialValue: _produtoSelecionadoId,
                   decoration: _inputDecoration(
                     context,
-                    hint: 'Selecione o produto',
+                    label: 'label_produto'.tr(),
+                    hint: 'hint_selecione_produto'.tr(),
                     prefixIcon: Icons.inventory_2_outlined,
                   ),
                   items:
@@ -295,29 +296,28 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
                     final produto = _produtosReais.firstWhere((p) => p.id == v);
                     _preencherProduto(produto);
                   },
-                  validator: (v) => v == null ? 'Selecione um produto' : null,
+                  validator: (v) => v == null ? 'erro_selecione_produto'.tr() : null,
                 ),
             const SizedBox(height: 16),
 
-            // Fornecedor (texto livre)
-            _SectionLabel(label: 'Fornecedor'),
+            _SectionLabel(label: 'label_fornecedor'.tr()),
             const SizedBox(height: 8),
             TextFormField(
               controller: _fornecedorController,
               decoration: _inputDecoration(
                 context,
-                hint: 'Nome do fornecedor',
+                label: 'label_fornecedor'.tr(),
+                hint: 'hint_nome_fornecedor'.tr(),
                 prefixIcon: Icons.store_outlined,
               ),
               validator:
                   (v) =>
                       v == null || v.trim().isEmpty
-                          ? 'Campo obrigatório'
+                          ? 'erro_campo_obrigatorio'.tr()
                           : null,
             ),
             const SizedBox(height: 16),
 
-            // Quantidade e Valor
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -325,13 +325,14 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _SectionLabel(label: 'Quantidade'),
+                      _SectionLabel(label: 'label_quantidade'.tr()),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _quantidadeController,
                         decoration: _inputDecoration(
                           context,
-                          hint: 'Ex: 10',
+                          label: 'label_quantidade'.tr(),
+                          hint: 'hint_ex_10'.tr(),
                           prefixIcon: Icons.numbers_rounded,
                         ),
                         keyboardType: TextInputType.number,
@@ -339,9 +340,9 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
                           FilteringTextInputFormatter.digitsOnly,
                         ],
                         validator: (v) {
-                          if (v == null || v.isEmpty) return 'Obrigatório';
+                          if (v == null || v.isEmpty) return 'erro_obrigatorio'.tr();
                           if (int.tryParse(v) == null || int.parse(v) <= 0) {
-                            return 'Inválido';
+                            return 'erro_invalido'.tr();
                           }
                           return null;
                         },
@@ -354,13 +355,14 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _SectionLabel(label: 'Valor unit. (R\$)'),
+                      _SectionLabel(label: 'label_valor_unitario'.tr()),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _valorController,
                         decoration: _inputDecoration(
                           context,
-                          hint: 'Ex: 99,90',
+                          label: 'hint_valor_unitario'.tr(),
+                          hint: 'hint_ex_99_90'.tr(),
                           prefixIcon: Icons.attach_money_rounded,
                         ),
                         keyboardType: const TextInputType.numberWithOptions(
@@ -370,7 +372,7 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
                           FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
                         ],
                         validator: (v) {
-                          if (v == null || v.isEmpty) return 'Obrigatório';
+                          if (v == null || v.isEmpty) return 'erro_obrigatorio'.tr();
                           return null;
                         },
                       ),
@@ -381,14 +383,14 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
             ),
             const SizedBox(height: 16),
 
-            // Observação
-            _SectionLabel(label: 'Observação (opcional)'),
+            _SectionLabel(label: 'label_observacao'.tr()),
             const SizedBox(height: 8),
             TextFormField(
               controller: _observacaoController,
               decoration: _inputDecoration(
                 context,
-                hint: 'Adicione uma observação...',
+                label: 'hint_observacao'.tr(),
+                hint: 'hint_adicione_observacao'.tr(),
                 prefixIcon: Icons.notes_rounded,
               ),
               maxLines: 3,
@@ -396,7 +398,6 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
             ),
             const SizedBox(height: 32),
 
-            // Botão salvar
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -419,8 +420,8 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
                         ),
                 label: Text(
                   _salvando
-                      ? 'Salvando...'
-                      : 'Registrar ${isEntrada ? 'Entrada' : 'Saída'}',
+                      ? 'botao_salvando'.tr()
+                      : isEntrada ? 'botao_registrar_entrada'.tr() : 'botao_registrar_saida'.tr(),
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
@@ -443,12 +444,14 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
 
   InputDecoration _inputDecoration(
     BuildContext context, {
+    required String label,
     required String hint,
     required IconData prefixIcon,
     Widget? suffixIcon,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     return InputDecoration(
+      labelText: label,
       hintText: hint,
       prefixIcon: Icon(prefixIcon, size: 20),
       suffixIcon: suffixIcon,
@@ -457,11 +460,15 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.3)),
+        borderSide: BorderSide(
+          color: colorScheme.outline.withValues(alpha: 0.3),
+        ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.3)),
+        borderSide: BorderSide(
+          color: colorScheme.outline.withValues(alpha: 0.3),
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -475,7 +482,6 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
   }
 }
 
-// ───────────────────────────────────────────────
 class _SectionLabel extends StatelessWidget {
   final String label;
   const _SectionLabel({required this.label});
@@ -486,7 +492,7 @@ class _SectionLabel extends StatelessWidget {
       label,
       style: Theme.of(context).textTheme.labelLarge?.copyWith(
         fontWeight: FontWeight.w600,
-        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
       ),
     );
   }
@@ -512,42 +518,52 @@ class _TipoButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: selected ? color : colorScheme.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: selected ? color : colorScheme.outline.withOpacity(0.3),
-            width: selected ? 2 : 1,
-          ),
-          boxShadow:
-              selected
-                  ? [
-                    BoxShadow(
-                      color: color.withOpacity(0.25),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ]
-                  : [],
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: selected ? Colors.white : color, size: 28),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: TextStyle(
-                color: selected ? Colors.white : color,
-                fontWeight: FontWeight.w700,
-                fontSize: 15,
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: 'semantics_tipo_movimentacao'.tr(args: [label]),
+      child: ExcludeSemantics(
+        child: GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              color: selected ? color : colorScheme.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color:
+                    selected
+                        ? color
+                        : colorScheme.outline.withValues(alpha: 0.3),
+                width: selected ? 2 : 1,
               ),
+              boxShadow:
+                  selected
+                      ? [
+                        BoxShadow(
+                          color: color.withValues(alpha: 0.25),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ]
+                      : [],
             ),
-          ],
+            child: Column(
+              children: [
+                Icon(icon, color: selected ? Colors.white : color, size: 28),
+                const SizedBox(height: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: selected ? Colors.white : color,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

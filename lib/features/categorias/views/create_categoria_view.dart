@@ -5,14 +5,10 @@ import 'package:gerencie_coisas/features/categorias/view_model/categoria_view_mo
 class CreateCategoriaView extends StatefulWidget {
   final CategoriaViewModel viewModel;
 
-  const CreateCategoriaView({
-    super.key,
-    required this.viewModel,
-  });
+  const CreateCategoriaView({super.key, required this.viewModel});
 
   @override
-  State<CreateCategoriaView> createState() =>
-      _CreateCategoriaViewState();
+  State<CreateCategoriaView> createState() => _CreateCategoriaViewState();
 }
 
 class _CreateCategoriaViewState extends State<CreateCategoriaView> {
@@ -21,30 +17,31 @@ class _CreateCategoriaViewState extends State<CreateCategoriaView> {
   String? parentId;
   bool loading = false;
 
-Future<void> save() async {
-  if (nameController.text.trim().isEmpty) return;
+  Future<void> save() async {
+    if (nameController.text.trim().isEmpty) return;
 
-  setState(() => loading = true);
+    setState(() => loading = true);
 
-  try {
-    final categoria = CategoriaModel(
-      id: '',
-      name: nameController.text.trim(),
-      parentId: (parentId != null && parentId!.isNotEmpty) ? parentId : null,
-    );
-
-    await widget.viewModel.addCategoria(categoria);
-
-    if (mounted) Navigator.pop(context);
-  } catch (e) {
-    if (mounted) {
-      setState(() => loading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao salvar: $e')),
+    try {
+      final categoria = CategoriaModel(
+        id: '',
+        name: nameController.text.trim(),
+        parentId: (parentId != null && parentId!.isNotEmpty) ? parentId : null,
       );
+
+      await widget.viewModel.addCategoria(categoria);
+
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        setState(() => loading = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erro ao salvar: $e')));
+      }
     }
   }
-}
+
   @override
   void initState() {
     super.initState();
@@ -55,13 +52,10 @@ Future<void> save() async {
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Nova Categoria'),
-      ),
+      appBar: AppBar(title: const Text('Nova Categoria')),
 
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -73,6 +67,7 @@ Future<void> save() async {
 
               decoration: const InputDecoration(
                 labelText: 'Nome da categoria',
+                hintText: 'Digite o nome da categoria',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -80,35 +75,34 @@ Future<void> save() async {
             const SizedBox(height: 20),
 
             DropdownButtonFormField<String?>(
-                    value: parentId,
+              initialValue: parentId,
 
-                    decoration: const InputDecoration(
-                      labelText: 'Categoria Pai',
-                      border: OutlineInputBorder(),
-                    ),
+              decoration: const InputDecoration(
+                labelText: 'Categoria Pai',
+                hintText: 'Selecione uma categoria pai, se houver',
+                border: OutlineInputBorder(),
+              ),
 
-                    items: [
-                      const DropdownMenuItem(
-                        value: null,
-                        child: Text('Sem categoria pai'),
-                      ),
+              items: [
+                const DropdownMenuItem(
+                  value: null,
+                  child: Text('Sem categoria pai'),
+                ),
 
-                      ...parentCategorias.map(
-                        (categoria) {
-                          return DropdownMenuItem(
-                            value: categoria.id,
-                            child: Text(categoria.name),
-                          );
-                        },
-                      ),
-                    ],
+                ...parentCategorias.map((categoria) {
+                  return DropdownMenuItem(
+                    value: categoria.id,
+                    child: Text(categoria.name),
+                  );
+                }),
+              ],
 
-                    onChanged: (value) {
-                      setState(() {
-                        parentId = value;
-                      });
-                    },
-                  ),
+              onChanged: (value) {
+                setState(() {
+                  parentId = value;
+                });
+              },
+            ),
             const SizedBox(height: 20),
 
             SizedBox(
@@ -117,9 +111,10 @@ Future<void> save() async {
               child: ElevatedButton(
                 onPressed: loading ? null : save,
 
-                child: loading
-                    ? const CircularProgressIndicator()
-                    : const Text('Salvar'),
+                child:
+                    loading
+                        ? const CircularProgressIndicator()
+                        : const Text('Salvar'),
               ),
             ),
           ],

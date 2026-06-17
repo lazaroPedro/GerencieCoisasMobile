@@ -9,7 +9,15 @@ void main() {
   test('Produtos - Deve retornar a lista de produtos cadastrados', () async {
     final service = MockProdutoService();
     final produtosMockados = [
-      Produto(id: 'p1', name: 'Notebook', quantity: 5, price: 3500.0, categoryId: '1', supplier: 'Fornecedor A', description: 'Notebook de última geração'),
+      Produto(
+        id: 'p1',
+        name: 'Notebook',
+        quantity: 5,
+        price: 3500.0,
+        categoryId: '1',
+        supplier: 'Fornecedor A',
+        description: 'Notebook de última geração',
+      ),
     ];
 
     when(() => service.listar()).thenAnswer((_) async => produtosMockados);

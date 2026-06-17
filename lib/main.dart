@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:gerencie_coisas/firebase_options.dart';
 import 'package:gerencie_coisas/core/theme/tema.dart';
 import 'package:gerencie_coisas/core/theme/theme_notifier.dart';
@@ -9,8 +10,19 @@ import 'package:gerencie_coisas/features/auth/views/login_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  await EasyLocalization.ensureInitialized();
+  
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(MyApp());
+  
+  runApp(
+    EasyLocalization(
+      supportedLocales: const [Locale('pt', 'BR'), Locale('en', 'US')],
+      path: 'assets/translations', 
+      fallbackLocale: const Locale('pt', 'BR'), 
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -27,6 +39,10 @@ class _MyAppState extends State<MyApp> {
       valueListenable: temaNotifier,
       builder: (context, themeMode, _) {
         return MaterialApp(
+          localizationsDelegates: context.localizationDelegates,
+          supportedLocales: context.supportedLocales,
+          locale: context.locale,
+          
           debugShowCheckedModeBanner: false,
           title: 'Gerencie Coisas',
           theme: AppTheme.lightTheme,
@@ -48,14 +64,20 @@ class AuthWrapper extends StatelessWidget {
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+          return Scaffold(
+            body: Center(
+              child: Semantics(
+                label: 'Carregando autenticação',
+                liveRegion: true,
+                child: const CircularProgressIndicator(),
+              ),
+            ),
           );
         }
         if (snapshot.hasData && snapshot.data != null) {
-          return const HomeScreen(); // usuário logado → vai para home
+          return const HomeScreen();
         }
-        return const LoginView(); // não logado → tela de login
+        return const LoginView();
       },
     );
   }

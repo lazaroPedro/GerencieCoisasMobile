@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../services/auth_service.dart';
 import '../services/location_service.dart';
 import '../services/biometria_service.dart';
@@ -49,14 +50,13 @@ class _LoginViewState extends State<LoginView> {
     }
   }
 
-  // LOGIN TRADICIONAL (E-MAIL E SENHA)
   Future<void> _login() async {
     if (_localizacao == null) {
-      setState(() => _erro = 'Obtenha sua localização antes de continuar.');
+      setState(() => _erro = 'erro_obter_localizacao'.tr());
       return;
     }
     if (_emailController.text.trim().isEmpty || _passwordController.text.isEmpty) {
-      setState(() => _erro = 'Preencha e-mail e senha.');
+      setState(() => _erro = 'erro_preencher_campos'.tr());
       return;
     }
 
@@ -71,12 +71,10 @@ class _LoginViewState extends State<LoginView> {
 
       await _authService.login(email, senha, _localizacao!);
       
-      // SALVA AS CREDENCIAIS PARA A BIOMETRIA USAR DEPOIS
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('saved_email', email);
       await prefs.setString('saved_password', senha);
 
-      // Login OK — o StreamBuilder redireciona
     } on FirebaseAuthException catch (e) {
       setState(() => _erro = _authService.translateError(e.code));
     } catch (e) {
@@ -86,35 +84,29 @@ class _LoginViewState extends State<LoginView> {
     }
   }
 
-  // LOGIN COM BIOMETRIA
   Future<void> _loginComBiometria() async {
     setState(() => _erro = null);
 
-    // 1. Verifica se a digital está configurada no aparelho
     final disponivel = await _biometriaService.podeAutenticar();
     if (!disponivel) {
       setState(() => _erro = 'Biometria não disponível neste aparelho.');
       return;
     }
 
-    // 2. Aciona o sensor na tela
     final sucesso = await _biometriaService.autenticar();
 
     if (sucesso) {
       setState(() => _carregando = true);
       try {
-        // 3. Busca os dados salvos do último login
         final prefs = await SharedPreferences.getInstance();
         final savedEmail = prefs.getString('saved_email');
         final savedPassword = prefs.getString('saved_password');
 
         if (savedEmail != null && savedPassword != null) {
-          // Garante que temos a localização antes de logar
           if (_localizacao == null) {
             await _obterLocalizacao();
           }
           
-          // 4. Faz o login no Firebase silenciosamente
           await _authService.login(savedEmail, savedPassword, _localizacao!);
           
           if (!mounted) return;
@@ -125,7 +117,6 @@ class _LoginViewState extends State<LoginView> {
             ),
           );
         } else {
-          // Se não tem dados salvos, pede pra logar com senha a primeira vez
           setState(() => _erro = 'Para usar a biometria, faça login com e-mail e senha a primeira vez.');
         }
       } on FirebaseAuthException catch (e) {
@@ -161,7 +152,7 @@ class _LoginViewState extends State<LoginView> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Gerencie Coisas',
+                'app_titulo'.tr(),
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -169,7 +160,7 @@ class _LoginViewState extends State<LoginView> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Faça login para continuar',
+                'login_subtitulo'.tr(),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurface.withOpacity(0.6),
                 ),
@@ -177,7 +168,6 @@ class _LoginViewState extends State<LoginView> {
               ),
               const SizedBox(height: 40),
 
-              // Bloco de localização
               _localizacao != null
                   ? _blocoLocalizacaoOk(_localizacao!.city)
                   : OutlinedButton.icon(
@@ -189,35 +179,33 @@ class _LoginViewState extends State<LoginView> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                             : const Icon(Icons.my_location),
-                    label: const Text('Obter Localização'),
+                    label: Text('botao_obter_localizacao'.tr()),
                     onPressed: _carregando ? null : _obterLocalizacao,
                   ),
 
               const SizedBox(height: 24),
 
-              // E-mail
-              _labelSecao('E-mail'),
+              _labelSecao('label_email'.tr()),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: _inputDecoration(
                   context,
-                  hint: 'seu@email.com',
+                  hint: 'hint_email'.tr(),
                   icone: Icons.email_outlined,
                 ),
               ),
               const SizedBox(height: 16),
 
-              // Senha
-              _labelSecao('Senha'),
+              _labelSecao('label_senha'.tr()),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
                 decoration: _inputDecoration(
                   context,
-                  hint: '••••••••',
+                  hint: 'hint_senha'.tr(),
                   icone: Icons.lock_outline,
                 ).copyWith(
                   suffixIcon: IconButton(
@@ -235,11 +223,9 @@ class _LoginViewState extends State<LoginView> {
               ),
               const SizedBox(height: 24),
 
-              // Erro
               if (_erro != null) _blocoErro(_erro!, colorScheme),
               if (_erro != null) const SizedBox(height: 16),
 
-              // Botão entrar tradicional
               SizedBox(
                 height: 52,
                 child: FilledButton.icon(
@@ -256,7 +242,7 @@ class _LoginViewState extends State<LoginView> {
                           )
                           : const Icon(Icons.login),
                   label: Text(
-                    _carregando ? 'Entrando...' : 'Entrar',
+                    _carregando ? 'botao_entrando'.tr() : 'botao_entrar'.tr(),
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 16,
@@ -272,14 +258,13 @@ class _LoginViewState extends State<LoginView> {
               
               const SizedBox(height: 16),
 
-              // <-- DIVISOR VISUAL -->
               Row(
                 children: [
                   Expanded(child: Divider(color: colorScheme.outline.withOpacity(0.3))),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
-                      'OU',
+                      'divisor_ou'.tr(),
                       style: TextStyle(color: colorScheme.outline, fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -289,15 +274,14 @@ class _LoginViewState extends State<LoginView> {
               
               const SizedBox(height: 16),
 
-              // <-- NOVO BOTÃO DE BIOMETRIA -->
               SizedBox(
                 height: 52,
                 child: OutlinedButton.icon(
                   onPressed: _carregando ? null : _loginComBiometria,
                   icon: const Icon(Icons.fingerprint, size: 28),
-                  label: const Text(
-                    'Entrar com a Digital',
-                    style: TextStyle(
+                  label: Text(
+                    'botao_biometria'.tr(),
+                    style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 16,
                     ),
@@ -319,7 +303,7 @@ class _LoginViewState extends State<LoginView> {
                     MaterialPageRoute(builder: (_) => const RegisterView()),
                   );
                 },
-                child: const Text('Não tem conta? Cadastre-se'),
+                child: Text('botao_sem_conta'.tr()),
               ),
             ],
           ),
@@ -340,10 +324,10 @@ class _LoginViewState extends State<LoginView> {
         children: [
           const Icon(Icons.location_on, color: Colors.green),
           const SizedBox(width: 8),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Localização obtida.',
-              style: TextStyle(
+              'msg_localizacao_ok'.tr(),
+              style: const TextStyle(
                 color: Colors.green,
                 fontWeight: FontWeight.w600,
               ),
@@ -351,7 +335,7 @@ class _LoginViewState extends State<LoginView> {
           ),
           TextButton(
             onPressed: _obterLocalizacao,
-            child: const Text('Atualizar'),
+            child: Text('botao_atualizar'.tr()),
           ),
         ],
       ),

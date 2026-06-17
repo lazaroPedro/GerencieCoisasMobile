@@ -3,8 +3,6 @@ import 'package:gerencie_coisas/features/categorias/view_model/categoria_view_mo
 import 'package:gerencie_coisas/features/categorias/views/create_categoria_view.dart';
 import 'package:gerencie_coisas/features/categorias/views/delete_categoria_view.dart';
 
-
-
 class CategoriaView extends StatefulWidget {
   const CategoriaView({super.key});
 
@@ -13,9 +11,7 @@ class CategoriaView extends StatefulWidget {
 }
 
 class _CategoriaViewState extends State<CategoriaView> {
-
   final CategoriaViewModel viewModel = CategoriaViewModel();
-
 
   @override
   void initState() {
@@ -30,6 +26,7 @@ class _CategoriaViewState extends State<CategoriaView> {
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
+        tooltip: 'Adicionar nova categoria',
         onPressed: () {
           Navigator.push(
             context,
@@ -48,146 +45,168 @@ class _CategoriaViewState extends State<CategoriaView> {
         itemBuilder: (context, index) {
           final categoria = viewModel.categorias[index];
 
-          return Container(
-            margin: const EdgeInsets.only(bottom: 14),
+          return Semantics(
+            container: true,
+            label:
+                'Categoria ${categoria.item.name}, ${categoria.children.length} subcategoria${categoria.children.length == 1 ? '' : 's'}. Toque duas vezes para expandir ou recolher.',
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 14),
 
-            decoration: BoxDecoration(
-              color: ColorScheme.of(context).surface,
-              borderRadius: BorderRadius.circular(18),
+              decoration: BoxDecoration(
+                color: ColorScheme.of(context).surface,
+                borderRadius: BorderRadius.circular(18),
+              ),
 
-              
-            ),
+              child: Theme(
+                data: Theme.of(
+                  context,
+                ).copyWith(dividerColor: Colors.transparent),
 
-            child: Theme(
-              data: Theme.of(
-                context,
-              ).copyWith(dividerColor: Colors.transparent),
-
-              child: ExpansionTile(
-                tilePadding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 8,
-                ),
-
-                childrenPadding: const EdgeInsets.only(
-                  left: 18,
-                  right: 18,
-                  bottom: 18,
-                ),
-
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => DeleteCategoriaView(viewModel: viewModel, categoriaId: categoria.item.id),
-                          ),
-                        );
-                        },
-                      icon: const Icon(Icons.delete_outline_rounded),
-                      color: Colors.redAccent,
-                    ),
-
-                    Icon(Icons.keyboard_arrow_down_rounded),
-                  ],
-                ),
-
-                leading: Container(
-                  width: 42,
-                  height: 42,
-
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
+                child: ExpansionTile(
+                  tilePadding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 8,
                   ),
 
-                  child:  Icon(Icons.folder_outlined, color: ColorScheme.of(context).primary),
-                ),
-
-                title: Text(    
-                  categoria.item.name,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
+                  childrenPadding: const EdgeInsets.only(
+                    left: 18,
+                    right: 18,
+                    bottom: 18,
                   ),
-                ),
 
-
-                children: [
-                  ...categoria.children.map(
-                    (sub) => Container(
-                      margin: const EdgeInsets.only(top: 10),
-
-                      padding: const EdgeInsets.all(14),
-
-                      decoration: BoxDecoration(
-                      
-                        borderRadius: BorderRadius.circular(14),
-
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.subdirectory_arrow_right_rounded,
-
-                          ),
-
-                          const SizedBox(width: 12),
-
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-
-                              children: [
-                                Text(
-                                  sub.name,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        tooltip: 'Excluir categoria ${categoria.item.name}',
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (_) => DeleteCategoriaView(
+                                    viewModel: viewModel,
+                                    categoriaId: categoria.item.id,
                                   ),
-                                ),
-
-                                const SizedBox(height: 4),
-
-                              
-                              ],
                             ),
-                          ),
-
-                          IconButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => DeleteCategoriaView(viewModel: viewModel, categoriaId: categoria.item.id),
-                          ),
-                        );
+                          );
                         },
-                        icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                        icon: const Icon(Icons.delete_outline_rounded),
                         color: Colors.redAccent,
                       ),
-                        ],
+
+                      const ExcludeSemantics(
+                        child: Icon(Icons.keyboard_arrow_down_rounded),
                       ),
+                    ],
+                  ),
+
+                  leading: Container(
+                    width: 42,
+                    height: 42,
+
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+
+                    child: Icon(
+                      Icons.folder_outlined,
+                      color: ColorScheme.of(context).primary,
                     ),
                   ),
 
-                  if (categoria.children.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 10),
+                  title: Text(
+                    categoria.item.name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
 
-                      child: Text(
-                        'Nenhuma subcategoria',
+                  children: [
+                    ...categoria.children.map(
+                      (sub) => Semantics(
+                        container: true,
+                        label: 'Subcategoria ${sub.name}',
+                        child: Container(
+                          margin: const EdgeInsets.only(top: 10),
 
-                        style: TextStyle(
-                          color: Colors.grey.shade500,
-                          fontStyle: FontStyle.italic,
+                          padding: const EdgeInsets.all(14),
+
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(14),
+
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+
+                          child: Row(
+                            children: [
+                              const ExcludeSemantics(
+                                child: Icon(
+                                  Icons.subdirectory_arrow_right_rounded,
+                                ),
+                              ),
+
+                              const SizedBox(width: 12),
+
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                                  children: [
+                                    Text(
+                                      sub.name,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+
+                                    const SizedBox(height: 4),
+                                  ],
+                                ),
+                              ),
+
+                              IconButton(
+                                tooltip: 'Excluir subcategoria ${sub.name}',
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (_) => DeleteCategoriaView(
+                                            viewModel: viewModel,
+                                            categoriaId: sub.id,
+                                          ),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(
+                                  Icons.delete_outline_rounded,
+                                  size: 20,
+                                ),
+                                color: Colors.redAccent,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                ],
+
+                    if (categoria.children.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10),
+
+                        child: Text(
+                          'Nenhuma subcategoria',
+
+                          style: TextStyle(
+                            color: Colors.grey.shade500,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           );

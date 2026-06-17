@@ -53,3 +53,20 @@ MaterialApp(
   darkTheme: AppTheme.darkTheme, 
   themeMode: ThemeMode.system,
 )
+```
+
+---
+
+## 3. Relatório de Acessibilidade
+
+O aplicativo implementa recursos de acessibilidade para melhorar o uso com leitores de tela, contraste visual e navegação assistida utilizando o TalkBack.
+
+Recursos implementados:
+* **TalkBack/leitores de tela:** uso de `Semantics`, `semanticLabel` e `liveRegion` em carregamento, listas, cards, detalhes, categorias, movimentações, produtos e leitor de código de barras.
+* **Anúncios acessíveis:** mensagens de sucesso, erro e validação no login, cadastro e obtenção de localização com `SemanticsService.sendAnnouncement`.
+* **Formulários acessíveis:** campos com `label` e `hint` em login, cadastro, produtos e movimentações.
+* **Botões e ações:** `tooltip` em botões de ícone, como editar, excluir, limpar busca, filtros, câmera, lanterna e leitura de código de barras.
+* **Navegação:** abas principais identificadas por rótulos: Produtos, Categorias, Movimentações e Configurações.
+* **Acessibilidade visual:** suporte a modo claro e escuro, tokens de cor centralizados e cores semânticas para texto, ações, erros e status.
+* **Recursos de autenticação:** suporte a biometria e validação por localização, com feedback visual e acessível.
+

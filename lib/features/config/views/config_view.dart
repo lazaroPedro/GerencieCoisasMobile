@@ -19,6 +19,9 @@ class ConfigView extends StatelessWidget {
               builder: (context, themeMode, _) {
                 return SwitchListTile(
                   title: const Text('Tema Escuro'),
+                  subtitle: Text(
+                    themeMode == ThemeMode.dark ? 'Ativado' : 'Desativado',
+                  ),
                   value: themeMode == ThemeMode.dark,
                   onChanged: (bool isDark) {
                     temaNotifier.value =
@@ -33,6 +36,7 @@ class ConfigView extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('Sair da conta'),
+              subtitle: const Text('Finaliza a sessão atual'),
               textColor: Colors.red,
               iconColor: Colors.red,
               onTap: () async {

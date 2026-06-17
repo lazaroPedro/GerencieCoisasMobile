@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart'; // <-- Importação do pacote
 import 'package:gerencie_coisas/core/theme/app_colors.dart';
 import '../model/produto.dart';
-import '../services/produto_service.dart'; // Importação do serviço que criamos
+import '../services/produto_service.dart';
 import 'produtos_detail_page.dart';
 import 'produtos_form_page.dart';
 
@@ -17,7 +18,6 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
-  // Lista vazia que vai receber os dados reais do Firebase
   List<Produto> _todosProdutos = [];
   final _service = ProdutoService();
 
@@ -27,13 +27,11 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
     _carregarDados();
   }
 
-  // Função para buscar os dados no Firestore e atualizar a tela
   Future<void> _carregarDados() async {
     final dados = await _service.listar();
     setState(() => _todosProdutos = dados);
   }
 
-  // A filtragem agora usa a lista real (_todosProdutos)
   List<Produto> get _produtosFiltrados {
     if (_searchQuery.isEmpty) return _todosProdutos;
     return _todosProdutos.where((p) {
@@ -61,9 +59,9 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
     return Scaffold(
       backgroundColor: AppColors.bodyBg,
       appBar: AppBar(
-        title: const Text(
-          'Produtos',
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20),
+        title: Text(
+          'titulo_produtos'.tr(),
+          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 20),
         ),
         centerTitle: false,
       ),
@@ -71,38 +69,45 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: SearchBar(
-              controller: _searchController,
-              hintText: 'Buscar produto, fornecedor ou código...',
-              hintStyle: const WidgetStatePropertyAll(
-                TextStyle(color: AppColors.textMuted, fontSize: 14),
-              ),
-              leading: const Icon(
-                Icons.search_rounded,
-                color: AppColors.textMuted,
-              ),
-              trailing:
-                  _searchQuery.isNotEmpty
-                      ? [
-                        IconButton(
-                          icon: const Icon(
-                            Icons.close_rounded,
-                            color: AppColors.textMuted,
+            child: Semantics(
+              label: 'semantics_buscar_produto'.tr(),
+              textField: true,
+              child: SearchBar(
+                controller: _searchController,
+                hintText: 'hint_buscar_produto'.tr(),
+                hintStyle: const WidgetStatePropertyAll(
+                  TextStyle(color: AppColors.textMuted, fontSize: 14),
+                ),
+                leading: const Icon(
+                  Icons.search_rounded,
+                  color: AppColors.textMuted,
+                ),
+                trailing:
+                    _searchQuery.isNotEmpty
+                        ? [
+                          IconButton(
+                            tooltip: 'tooltip_limpar_busca'.tr(),
+                            icon: const Icon(
+                              Icons.close_rounded,
+                              color: AppColors.textMuted,
+                            ),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
+                            },
                           ),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() => _searchQuery = '');
-                          },
-                        ),
-                      ]
-                      : null,
-              onChanged: (v) => setState(() => _searchQuery = v),
-              elevation: const WidgetStatePropertyAll(0),
-              backgroundColor: const WidgetStatePropertyAll(AppColors.surface),
-              shape: WidgetStatePropertyAll(
-                RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  side: const BorderSide(color: AppColors.border),
+                        ]
+                        : null,
+                onChanged: (v) => setState(() => _searchQuery = v),
+                elevation: const WidgetStatePropertyAll(0),
+                backgroundColor: const WidgetStatePropertyAll(
+                  AppColors.surface,
+                ),
+                shape: WidgetStatePropertyAll(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: const BorderSide(color: AppColors.border),
+                  ),
                 ),
               ),
             ),
@@ -112,7 +117,7 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                '${filtrados.length} produto${filtrados.length != 1 ? 's' : ''}',
+                '${filtrados.length} ${filtrados.length != 1 ? 'produto_plural'.tr() : 'produto_singular'.tr()}',
                 style: const TextStyle(
                   color: AppColors.textMuted,
                   fontSize: 12,
@@ -123,13 +128,12 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
           Expanded(
             child:
                 filtrados.isEmpty
-                    ? const Center(
+                    ? Center(
                       child: Text(
-                        'Nenhum produto encontrado.',
-                        style: TextStyle(color: AppColors.textMuted),
+                        'msg_nenhum_produto'.tr(),
+                        style: const TextStyle(color: AppColors.textMuted),
                       ),
                     )
-                    // Adicionado o RefreshIndicator para permitir recarregar a lista puxando para baixo
                     : RefreshIndicator(
                       onRefresh: _carregarDados,
                       child: ListView.separated(
@@ -140,128 +144,165 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
                           right: 16,
                         ),
                         itemCount: filtrados.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        separatorBuilder:
+                            (context, index) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
                           final produto = filtrados[index];
                           final estoqueBaixo = produto.quantity < 10;
+                          final barcodeLabel =
+                              produto.barcode != null &&
+                                      produto.barcode!.isNotEmpty
+                                  ? 'texto_codigo_barras_prefix'.tr(args: [produto.barcode!])
+                                  : '';
+                          final statusEstoque =
+                              estoqueBaixo
+                                  ? 'status_estoque_baixo'.tr()
+                                  : 'status_estoque_suficiente'.tr();
 
-                          return GestureDetector(
-                            onTap: () async {
-                              // Await para recarregar caso um produto seja excluído ou editado na tela de detalhes
-                              await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (_) =>
-                                          ProdutosDetailPage(produto: produto),
-                                ),
-                              );
-                              _carregarDados();
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: AppColors.surface,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: AppColors.borderLight,
-                                ),
-                              ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.hoverBg,
-                                      borderRadius: BorderRadius.circular(8),
+                          return Semantics(
+                            button: true,
+                            label: 'semantics_produto_card'.tr(args: [
+                              produto.name, 
+                              produto.supplier, 
+                              _formatarMoeda(produto.price), 
+                              produto.quantity.toString(), 
+                              statusEstoque, 
+                              barcodeLabel
+                            ]),
+                            child: ExcludeSemantics(
+                              child: GestureDetector(
+                                onTap: () async {
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (_) => ProdutosDetailPage(
+                                            produto: produto,
+                                          ),
                                     ),
-                                    child: const Icon(
-                                      Icons.inventory_2_rounded,
-                                      color: AppColors.primary,
-                                      size: 24,
+                                  );
+                                  _carregarDados();
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surface,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: AppColors.borderLight,
                                     ),
                                   ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          produto.name,
-                                          style: const TextStyle(
-                                            color: AppColors.textPrimary,
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 16,
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.hoverBg,
+                                          borderRadius: BorderRadius.circular(
+                                            8,
                                           ),
                                         ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          produto.supplier,
-                                          style: const TextStyle(
-                                            color: AppColors.textMuted,
-                                            fontSize: 13,
-                                          ),
+                                        child: const Icon(
+                                          Icons.inventory_2_rounded,
+                                          color: AppColors.primary,
+                                          size: 24,
                                         ),
-                                        if (produto.barcode != null &&
-                                            produto.barcode!.isNotEmpty) ...[
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            'Código: ${produto.barcode}',
-                                            style: const TextStyle(
-                                              color: AppColors.textMuted,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ],
-                                        const SizedBox(height: 12),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              _formatarMoeda(produto.price),
+                                              produto.name,
                                               style: const TextStyle(
-                                                fontWeight: FontWeight.w800,
-                                                color: AppColors.primary,
-                                                fontSize: 15,
+                                                color: AppColors.textPrimary,
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 16,
                                               ),
                                             ),
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 4,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color:
-                                                    estoqueBaixo
-                                                        ? AppColors.danger
-                                                            .withOpacity(0.1)
-                                                        : AppColors.success
-                                                            .withOpacity(0.1),
-                                                borderRadius:
-                                                    BorderRadius.circular(6),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              produto.supplier,
+                                              style: const TextStyle(
+                                                color: AppColors.textMuted,
+                                                fontSize: 13,
                                               ),
-                                              child: Text(
-                                                'Qtd: ${produto.quantity}',
-                                                style: TextStyle(
+                                            ),
+                                            if (produto.barcode != null &&
+                                                produto
+                                                    .barcode!
+                                                    .isNotEmpty) ...[
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                'label_codigo'.tr(args: [produto.barcode!]),
+                                                style: const TextStyle(
+                                                  color: AppColors.textMuted,
                                                   fontSize: 12,
-                                                  fontWeight: FontWeight.w700,
-                                                  color:
-                                                      estoqueBaixo
-                                                          ? AppColors.danger
-                                                          : AppColors.success,
                                                 ),
                                               ),
+                                            ],
+                                            const SizedBox(height: 12),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text(
+                                                  _formatarMoeda(produto.price),
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w800,
+                                                    color: AppColors.primary,
+                                                    fontSize: 15,
+                                                  ),
+                                                ),
+                                                Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 4,
+                                                      ),
+                                                  decoration: BoxDecoration(
+                                                    color:
+                                                        estoqueBaixo
+                                                            ? AppColors.danger
+                                                                .withValues(
+                                                                  alpha: 0.1,
+                                                                )
+                                                            : AppColors.success
+                                                                .withValues(
+                                                                  alpha: 0.1,
+                                                                ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          6,
+                                                        ),
+                                                  ),
+                                                  child: Text(
+                                                    'label_qtd'.tr(args: [produto.quantity.toString()]),
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      color:
+                                                          estoqueBaixo
+                                                              ? AppColors.danger
+                                                              : AppColors
+                                                                  .success,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ],
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
-                                ],
+                                ),
                               ),
                             ),
                           );
@@ -272,8 +313,8 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        tooltip: 'tooltip_add_produto'.tr(), 
         onPressed: () async {
-          // Await adicionado aqui também para atualizar a lista ao retornar do formulário
           await Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const ProdutosFormPage()),
@@ -281,9 +322,9 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
           _carregarDados();
         },
         icon: const Icon(Icons.add_rounded),
-        label: const Text(
-          'Novo Produto',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        label: Text(
+          'botao_novo_produto'.tr(), // <-- Texto traduzido
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,

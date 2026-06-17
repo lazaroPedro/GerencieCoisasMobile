@@ -19,28 +19,29 @@ class _MovimentacoesListPageState extends State<MovimentacoesListPage> {
   String _searchQuery = '';
 
   List<Movimentacao> _todasMovimentacoes = [];
-    final _service = MovimentacaoService();
+  final _service = MovimentacaoService();
 
-    @override
-    void initState() {
-      super.initState();
-      _carregarDados();
-    }
+  @override
+  void initState() {
+    super.initState();
+    _carregarDados();
+  }
 
-    Future<void> _carregarDados() async {
-      final dados = await _service.listar();
-      setState(() => _todasMovimentacoes = dados);
-    }
+  Future<void> _carregarDados() async {
+    final dados = await _service.listar();
+    setState(() => _todasMovimentacoes = dados);
+  }
 
-    List<Movimentacao> get _movimentacoesFiltradas {
-      return _todasMovimentacoes.where((m) {
-        final matchTipo = _filtroTipo == null || m.tipo == _filtroTipo;
-        final matchSearch = _searchQuery.isEmpty ||
-            m.produto.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            m.fornecedor.toLowerCase().contains(_searchQuery.toLowerCase());
-        return matchTipo && matchSearch;
-      }).toList();
-    }
+  List<Movimentacao> get _movimentacoesFiltradas {
+    return _todasMovimentacoes.where((m) {
+      final matchTipo = _filtroTipo == null || m.tipo == _filtroTipo;
+      final matchSearch =
+          _searchQuery.isEmpty ||
+          m.produto.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          m.fornecedor.toLowerCase().contains(_searchQuery.toLowerCase());
+      return matchTipo && matchSearch;
+    }).toList();
+  }
 
   double get _totalEntradas {
     return _todasMovimentacoes
@@ -109,29 +110,37 @@ class _MovimentacoesListPageState extends State<MovimentacoesListPage> {
           // Barra de busca
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: SearchBar(
-              controller: _searchController,
-              hintText: 'Buscar por produto ou fornecedor...',
-              leading: const Icon(Icons.search_rounded),
-              trailing: _searchQuery.isNotEmpty
-                  ? [
-                      IconButton(
-                        icon: const Icon(Icons.close_rounded),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() => _searchQuery = '');
-                        },
-                      ),
-                    ]
-                  : null,
-              onChanged: (v) => setState(() => _searchQuery = v),
-              elevation: const WidgetStatePropertyAll(0),
-              backgroundColor: WidgetStatePropertyAll(colorScheme.surface),
-              shape: WidgetStatePropertyAll(
-                RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(
-                      color: colorScheme.outline.withOpacity(0.3), width: 1),
+            child: Semantics(
+              label: 'Buscar movimentação por produto ou fornecedor',
+              textField: true,
+              child: SearchBar(
+                controller: _searchController,
+                hintText: 'Buscar por produto ou fornecedor...',
+                leading: const Icon(Icons.search_rounded),
+                trailing:
+                    _searchQuery.isNotEmpty
+                        ? [
+                          IconButton(
+                            tooltip: 'Limpar busca de movimentações',
+                            icon: const Icon(Icons.close_rounded),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
+                            },
+                          ),
+                        ]
+                        : null,
+                onChanged: (v) => setState(() => _searchQuery = v),
+                elevation: const WidgetStatePropertyAll(0),
+                backgroundColor: WidgetStatePropertyAll(colorScheme.surface),
+                shape: WidgetStatePropertyAll(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(
+                      color: colorScheme.outline.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -152,8 +161,10 @@ class _MovimentacoesListPageState extends State<MovimentacoesListPage> {
                 _FilterChip(
                   label: 'Entradas',
                   selected: _filtroTipo == TipoMovimentacao.entrada,
-                  onSelected: (_) => setState(() =>
-                      _filtroTipo = TipoMovimentacao.entrada),
+                  onSelected:
+                      (_) => setState(
+                        () => _filtroTipo = TipoMovimentacao.entrada,
+                      ),
                   color: const Color(0xFF2E7D32),
                   icon: Icons.arrow_downward_rounded,
                 ),
@@ -161,8 +172,9 @@ class _MovimentacoesListPageState extends State<MovimentacoesListPage> {
                 _FilterChip(
                   label: 'Saídas',
                   selected: _filtroTipo == TipoMovimentacao.saida,
-                  onSelected: (_) => setState(
-                      () => _filtroTipo = TipoMovimentacao.saida),
+                  onSelected:
+                      (_) =>
+                          setState(() => _filtroTipo = TipoMovimentacao.saida),
                   color: const Color(0xFFC62828),
                   icon: Icons.arrow_upward_rounded,
                 ),
@@ -178,7 +190,7 @@ class _MovimentacoesListPageState extends State<MovimentacoesListPage> {
                 Text(
                   '${filtradas.length} registro${filtradas.length != 1 ? 's' : ''}',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.5),
+                    color: colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                 ),
               ],
@@ -187,40 +199,42 @@ class _MovimentacoesListPageState extends State<MovimentacoesListPage> {
 
           // Lista
           Expanded(
-            child: filtradas.isEmpty
-                ? _EmptyState()
-                : RefreshIndicator(
-                  onRefresh: _carregarDados,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.only(top: 4, bottom: 100),
-                    itemCount: filtradas.length,
-                    itemBuilder: (context, index) {
-                      final m = filtradas[index];
-                      return MovimentacaoCard(
-                        movimentacao: m,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  MovimentacoesDetailPage(movimentacao: m),
-                            ),
+            child:
+                filtradas.isEmpty
+                    ? _EmptyState()
+                    : RefreshIndicator(
+                      onRefresh: _carregarDados,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.only(top: 4, bottom: 100),
+                        itemCount: filtradas.length,
+                        itemBuilder: (context, index) {
+                          final m = filtradas[index];
+                          return MovimentacaoCard(
+                            movimentacao: m,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (_) => MovimentacoesDetailPage(
+                                        movimentacao: m,
+                                      ),
+                                ),
+                              );
+                            },
                           );
                         },
-                      );
-                    },
-                  ),
-                ),
+                      ),
+                    ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        tooltip: 'Adicionar nova movimentação',
         onPressed: () async {
           await Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (_) => const MovimentacoesFormPage(),
-            ),
+            MaterialPageRoute(builder: (_) => const MovimentacoesFormPage()),
           );
           _carregarDados();
         },
@@ -297,47 +311,50 @@ class _ResumoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(8),
+    return Semantics(
+      label: '$label, total $valor',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: color, size: 18),
             ),
-            child: Icon(icon, color: color, size: 18),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: color.withOpacity(0.8),
-                    fontWeight: FontWeight.w500,
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: color.withValues(alpha: 0.8),
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                Text(
-                  valor,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
+                  Text(
+                    valor,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -361,6 +378,10 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FilterChip(
+      tooltip:
+          selected
+              ? 'Filtro $label selecionado'
+              : 'Filtrar movimentações por $label',
       label: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -380,8 +401,8 @@ class _FilterChip extends StatelessWidget {
         fontWeight: FontWeight.w600,
         fontSize: 13,
       ),
-      backgroundColor: color.withOpacity(0.08),
-      side: BorderSide(color: color.withOpacity(0.3)),
+      backgroundColor: color.withValues(alpha: 0.08),
+      side: BorderSide(color: color.withValues(alpha: 0.3)),
       showCheckmark: false,
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
     );
@@ -399,13 +420,13 @@ class _EmptyState extends StatelessWidget {
           Icon(
             Icons.inbox_rounded,
             size: 64,
-            color: theme.colorScheme.onSurface.withOpacity(0.2),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
           ),
           const SizedBox(height: 16),
           Text(
             'Nenhuma movimentação encontrada',
             style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.4),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
             ),
           ),
         ],
