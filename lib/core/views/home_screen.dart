@@ -5,10 +5,7 @@ import 'package:gerencie_coisas/features/movimentacoes/movimentacoes_list_page.d
 import 'package:gerencie_coisas/features/produtos/views/produtos_list_page.dart';
 
 class HomeScreen extends StatefulWidget {
-
-  const HomeScreen({
-    super.key,
-  });
+  const HomeScreen({super.key});
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -21,12 +18,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final screens = [
       // const Center(child: Text('Dashboard')),
       const ProdutosListPage(),
-       CategoriaView(),
+      CategoriaView(),
       const MovimentacoesListPage(),
-       const ConfigView(),
+      const ConfigView(),
     ];
     final titles = [
-     // const Text('Dashboard'),
+      // const Text('Dashboard'),
       const Text('Produtos'),
       const Text('Categorias'),
       const Text('Movimentações'),
@@ -34,9 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: titles[_index],
-      ),
+      appBar: AppBar(title: titles[_index]),
 
       body: screens[_index],
       bottomNavigationBar: BottomNavigationBar(
@@ -51,11 +46,11 @@ class _HomeScreenState extends State<HomeScreen> {
         type: BottomNavigationBarType.fixed,
 
         items: const [
-      //    BottomNavigationBarItem(
-      //      icon: Icon(Icons.dashboard),
+          //    BottomNavigationBarItem(
+          //    BottomNavigationBarItem(
+          //      icon: Icon(Icons.dashboard),
           //  label: 'Dashboard',
-     //     ),
-
+          //     ),
           BottomNavigationBarItem(
             icon: Icon(Icons.inventory_2_outlined),
             label: 'Produtos',

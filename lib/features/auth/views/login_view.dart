@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
@@ -42,6 +43,13 @@ class _LoginViewState extends State<LoginView> {
     try {
       final loc = await _locationService.getCurrentLocation();
       setState(() => _localizacao = loc);
+      if (mounted) {
+        SemanticsService.sendAnnouncement(
+          View.of(context),
+          'Localização obtida com sucesso.',
+          Directionality.of(context),
+        );
+      }
     } catch (e) {
       setState(() => _erro = e.toString().replaceAll('Exception: ', ''));
     } finally {
@@ -53,10 +61,21 @@ class _LoginViewState extends State<LoginView> {
   Future<void> _login() async {
     if (_localizacao == null) {
       setState(() => _erro = 'Obtenha sua localização antes de continuar.');
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        _erro!,
+        Directionality.of(context),
+      );
       return;
     }
-    if (_emailController.text.trim().isEmpty || _passwordController.text.isEmpty) {
+    if (_emailController.text.trim().isEmpty ||
+        _passwordController.text.isEmpty) {
       setState(() => _erro = 'Preencha e-mail e senha.');
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        _erro!,
+        Directionality.of(context),
+      );
       return;
     }
 
@@ -70,7 +89,7 @@ class _LoginViewState extends State<LoginView> {
       final senha = _passwordController.text.trim();
 
       await _authService.login(email, senha, _localizacao!);
-      
+
       // SALVA AS CREDENCIAIS PARA A BIOMETRIA USAR DEPOIS
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('saved_email', email);
@@ -113,10 +132,10 @@ class _LoginViewState extends State<LoginView> {
           if (_localizacao == null) {
             await _obterLocalizacao();
           }
-          
+
           // 4. Faz o login no Firebase silenciosamente
           await _authService.login(savedEmail, savedPassword, _localizacao!);
-          
+
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -126,7 +145,11 @@ class _LoginViewState extends State<LoginView> {
           );
         } else {
           // Se não tem dados salvos, pede pra logar com senha a primeira vez
-          setState(() => _erro = 'Para usar a biometria, faça login com e-mail e senha a primeira vez.');
+          setState(
+            () =>
+                _erro =
+                    'Para usar a biometria, faça login com e-mail e senha a primeira vez.',
+          );
         }
       } on FirebaseAuthException catch (e) {
         setState(() => _erro = _authService.translateError(e.code));
@@ -171,7 +194,7 @@ class _LoginViewState extends State<LoginView> {
               Text(
                 'Faça login para continuar',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurface.withOpacity(0.6),
+                  color: colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -200,9 +223,11 @@ class _LoginViewState extends State<LoginView> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _emailController,
+                autofillHints: const [AutofillHints.email],
                 keyboardType: TextInputType.emailAddress,
                 decoration: _inputDecoration(
                   context,
+                  label: 'E-mail',
                   hint: 'seu@email.com',
                   icone: Icons.email_outlined,
                 ),
@@ -214,13 +239,17 @@ class _LoginViewState extends State<LoginView> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _passwordController,
+                autofillHints: const [AutofillHints.password],
                 obscureText: _obscurePassword,
                 decoration: _inputDecoration(
                   context,
+                  label: 'Senha',
                   hint: '••••••••',
                   icone: Icons.lock_outline,
                 ).copyWith(
                   suffixIcon: IconButton(
+                    tooltip:
+                        _obscurePassword ? 'Mostrar senha' : 'Ocultar senha',
                     icon: Icon(
                       _obscurePassword
                           ? Icons.visibility_off
@@ -269,24 +298,35 @@ class _LoginViewState extends State<LoginView> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
 
               // <-- DIVISOR VISUAL -->
               Row(
                 children: [
-                  Expanded(child: Divider(color: colorScheme.outline.withOpacity(0.3))),
+                  Expanded(
+                    child: Divider(
+                      color: colorScheme.outline.withValues(alpha: 0.3),
+                    ),
+                  ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
                       'OU',
-                      style: TextStyle(color: colorScheme.outline, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: colorScheme.outline,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                  Expanded(child: Divider(color: colorScheme.outline.withOpacity(0.3))),
+                  Expanded(
+                    child: Divider(
+                      color: colorScheme.outline.withValues(alpha: 0.3),
+                    ),
+                  ),
                 ],
               ),
-              
+
               const SizedBox(height: 16),
 
               // <-- NOVO BOTÃO DE BIOMETRIA -->
@@ -297,10 +337,7 @@ class _LoginViewState extends State<LoginView> {
                   icon: const Icon(Icons.fingerprint, size: 28),
                   label: const Text(
                     'Entrar com a Digital',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
                   ),
                   style: OutlinedButton.styleFrom(
                     shape: RoundedRectangleBorder(
@@ -332,13 +369,15 @@ class _LoginViewState extends State<LoginView> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.1),
+        color: Colors.green.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.green),
       ),
       child: Row(
         children: [
-          const Icon(Icons.location_on, color: Colors.green),
+          const ExcludeSemantics(
+            child: Icon(Icons.location_on, color: Colors.green),
+          ),
           const SizedBox(width: 8),
           const Expanded(
             child: Text(
@@ -359,13 +398,17 @@ class _LoginViewState extends State<LoginView> {
   }
 
   Widget _blocoErro(String mensagem, ColorScheme cs) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cs.errorContainer,
-        borderRadius: BorderRadius.circular(8),
+    return Semantics(
+      liveRegion: true,
+      label: 'Erro: $mensagem',
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: cs.errorContainer,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(mensagem, style: TextStyle(color: cs.onErrorContainer)),
       ),
-      child: Text(mensagem, style: TextStyle(color: cs.onErrorContainer)),
     );
   }
 
@@ -374,18 +417,20 @@ class _LoginViewState extends State<LoginView> {
       label,
       style: Theme.of(context).textTheme.labelLarge?.copyWith(
         fontWeight: FontWeight.w600,
-        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
       ),
     );
   }
 
   InputDecoration _inputDecoration(
     BuildContext context, {
+    required String label,
     required String hint,
     required IconData icone,
   }) {
     final cs = Theme.of(context).colorScheme;
     return InputDecoration(
+      labelText: label,
       hintText: hint,
       prefixIcon: Icon(icone, size: 20),
       filled: true,
@@ -393,11 +438,11 @@ class _LoginViewState extends State<LoginView> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: cs.outline.withOpacity(0.3)),
+        borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.3)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: cs.outline.withOpacity(0.3)),
+        borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.3)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

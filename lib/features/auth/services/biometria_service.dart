@@ -1,6 +1,6 @@
-import 'package:local_auth/local_auth.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:local_auth/local_auth.dart';
 
 class BiometriaService {
   final LocalAuthentication _auth = LocalAuthentication();
@@ -20,11 +20,7 @@ class BiometriaService {
     try {
       return await _auth.authenticate(
         localizedReason: 'Use sua digital para entrar no Gerencie Coisas',
-        // As configurações agora ficam dentro de 'options'
-        options: const AuthenticationOptions(
-          stickyAuth: true, // Esta é a forma correta na versão 2.3.0
-          biometricOnly: true,
-        ),
+        biometricOnly: true,
       );
     } on PlatformException catch (e) {
       debugPrint("Erro ao autenticar: $e");

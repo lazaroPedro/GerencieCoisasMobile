@@ -159,7 +159,10 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
             _buildLabel('Nome'),
             TextFormField(
               controller: _nameController,
-              decoration: _inputDecoration(hint: 'Nome do produto'),
+              decoration: _inputDecoration(
+                label: 'Nome',
+                hint: 'Nome do produto',
+              ),
               validator:
                   (v) =>
                       v == null || v.trim().isEmpty
@@ -172,6 +175,7 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
             TextFormField(
               controller: _descriptionController,
               decoration: _inputDecoration(
+                label: 'Descrição',
                 hint: 'Descrição detalhada do produto...',
               ),
               maxLines: 3,
@@ -188,7 +192,10 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
                       _buildLabel('Preço (R\$)'),
                       TextFormField(
                         controller: _priceController,
-                        decoration: _inputDecoration(hint: '0.00'),
+                        decoration: _inputDecoration(
+                          label: 'Preço em reais',
+                          hint: '0.00',
+                        ),
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
@@ -210,7 +217,10 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
                       _buildLabel('Quantidade'),
                       TextFormField(
                         controller: _quantityController,
-                        decoration: _inputDecoration(hint: 'Ex: 10'),
+                        decoration: _inputDecoration(
+                          label: 'Quantidade',
+                          hint: 'Ex: 10',
+                        ),
                         keyboardType: TextInputType.number,
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
@@ -230,6 +240,7 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
             TextFormField(
               controller: _barcodeController,
               decoration: _inputDecoration(
+                label: 'Código de barras',
                 hint: 'Digite ou leia o código',
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.qr_code_scanner_rounded),
@@ -247,8 +258,11 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
             _carregandoDados
                 ? const Center(child: CircularProgressIndicator())
                 : DropdownButtonFormField<String>(
-                  value: _categoriaSelecionada,
-                  decoration: _inputDecoration(hint: 'Selecione a categoria'),
+                  initialValue: _categoriaSelecionada,
+                  decoration: _inputDecoration(
+                    label: 'Categoria',
+                    hint: 'Selecione a categoria',
+                  ),
                   items:
                       _categoriasReais.map((cat) {
                         return DropdownMenuItem<String>(
@@ -266,7 +280,10 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
             _buildLabel('Fornecedor'),
             TextFormField(
               controller: _supplierController,
-              decoration: _inputDecoration(hint: 'Nome do fornecedor'),
+              decoration: _inputDecoration(
+                label: 'Fornecedor',
+                hint: 'Nome do fornecedor',
+              ),
               validator:
                   (v) =>
                       v == null || v.trim().isEmpty
@@ -319,8 +336,13 @@ class _ProdutosFormPageState extends State<ProdutosFormPage> {
     );
   }
 
-  InputDecoration _inputDecoration({required String hint, Widget? suffixIcon}) {
+  InputDecoration _inputDecoration({
+    required String label,
+    required String hint,
+    Widget? suffixIcon,
+  }) {
     return InputDecoration(
+      labelText: label,
       hintText: hint,
       hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
       suffixIcon: suffixIcon,

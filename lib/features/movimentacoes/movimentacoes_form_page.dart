@@ -236,6 +236,7 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
               controller: _barcodeController,
               decoration: _inputDecoration(
                 context,
+                label: 'Código de barras',
                 hint: 'Leia ou digite o código',
                 prefixIcon: Icons.qr_code_rounded,
                 suffixIcon: IconButton(
@@ -273,9 +274,10 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
             _carregandoDados
                 ? const Center(child: CircularProgressIndicator())
                 : DropdownButtonFormField<String>(
-                  value: _produtoSelecionadoId,
+                  initialValue: _produtoSelecionadoId,
                   decoration: _inputDecoration(
                     context,
+                    label: 'Produto',
                     hint: 'Selecione o produto',
                     prefixIcon: Icons.inventory_2_outlined,
                   ),
@@ -306,6 +308,7 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
               controller: _fornecedorController,
               decoration: _inputDecoration(
                 context,
+                label: 'Fornecedor',
                 hint: 'Nome do fornecedor',
                 prefixIcon: Icons.store_outlined,
               ),
@@ -331,6 +334,7 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
                         controller: _quantidadeController,
                         decoration: _inputDecoration(
                           context,
+                          label: 'Quantidade',
                           hint: 'Ex: 10',
                           prefixIcon: Icons.numbers_rounded,
                         ),
@@ -360,6 +364,7 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
                         controller: _valorController,
                         decoration: _inputDecoration(
                           context,
+                          label: 'Valor unitário em reais',
                           hint: 'Ex: 99,90',
                           prefixIcon: Icons.attach_money_rounded,
                         ),
@@ -388,6 +393,7 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
               controller: _observacaoController,
               decoration: _inputDecoration(
                 context,
+                label: 'Observação opcional',
                 hint: 'Adicione uma observação...',
                 prefixIcon: Icons.notes_rounded,
               ),
@@ -443,12 +449,14 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
 
   InputDecoration _inputDecoration(
     BuildContext context, {
+    required String label,
     required String hint,
     required IconData prefixIcon,
     Widget? suffixIcon,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     return InputDecoration(
+      labelText: label,
       hintText: hint,
       prefixIcon: Icon(prefixIcon, size: 20),
       suffixIcon: suffixIcon,
@@ -457,11 +465,15 @@ class _MovimentacoesFormPageState extends State<MovimentacoesFormPage> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.3)),
+        borderSide: BorderSide(
+          color: colorScheme.outline.withValues(alpha: 0.3),
+        ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.3)),
+        borderSide: BorderSide(
+          color: colorScheme.outline.withValues(alpha: 0.3),
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -486,7 +498,7 @@ class _SectionLabel extends StatelessWidget {
       label,
       style: Theme.of(context).textTheme.labelLarge?.copyWith(
         fontWeight: FontWeight.w600,
-        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
       ),
     );
   }
@@ -512,42 +524,52 @@ class _TipoButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: selected ? color : colorScheme.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: selected ? color : colorScheme.outline.withOpacity(0.3),
-            width: selected ? 2 : 1,
-          ),
-          boxShadow:
-              selected
-                  ? [
-                    BoxShadow(
-                      color: color.withOpacity(0.25),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ]
-                  : [],
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: selected ? Colors.white : color, size: 28),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: TextStyle(
-                color: selected ? Colors.white : color,
-                fontWeight: FontWeight.w700,
-                fontSize: 15,
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: 'Tipo de movimentação: $label',
+      child: ExcludeSemantics(
+        child: GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              color: selected ? color : colorScheme.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color:
+                    selected
+                        ? color
+                        : colorScheme.outline.withValues(alpha: 0.3),
+                width: selected ? 2 : 1,
               ),
+              boxShadow:
+                  selected
+                      ? [
+                        BoxShadow(
+                          color: color.withValues(alpha: 0.25),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ]
+                      : [],
             ),
-          ],
+            child: Column(
+              children: [
+                Icon(icon, color: selected ? Colors.white : color, size: 28),
+                const SizedBox(height: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: selected ? Colors.white : color,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

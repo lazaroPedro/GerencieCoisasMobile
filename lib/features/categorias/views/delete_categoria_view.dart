@@ -12,12 +12,10 @@ class DeleteCategoriaView extends StatefulWidget {
   });
 
   @override
-  State<DeleteCategoriaView> createState() =>
-      _DeleteCategoriaViewState();
+  State<DeleteCategoriaView> createState() => _DeleteCategoriaViewState();
 }
 
-class _DeleteCategoriaViewState
-    extends State<DeleteCategoriaView> {
+class _DeleteCategoriaViewState extends State<DeleteCategoriaView> {
   bool loading = false;
 
   Future<void> delete() async {
@@ -25,9 +23,7 @@ class _DeleteCategoriaViewState
       loading = true;
     });
 
-    await widget.viewModel.deleteCategoria(
-      widget.categoriaId,
-    );
+    await widget.viewModel.deleteCategoria(widget.categoriaId);
 
     if (mounted) {
       Navigator.pop(context);
@@ -37,9 +33,7 @@ class _DeleteCategoriaViewState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Excluir Categoria'),
-      ),
+      appBar: AppBar(title: const Text('Excluir Categoria')),
 
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -59,9 +53,14 @@ class _DeleteCategoriaViewState
               child: ElevatedButton(
                 onPressed: loading ? null : delete,
 
-                child: loading
-                    ? const CircularProgressIndicator()
-                    : const Text('Excluir'),
+                child:
+                    loading
+                        ? Semantics(
+                          label: 'Excluindo categoria',
+                          liveRegion: true,
+                          child: const CircularProgressIndicator(),
+                        )
+                        : const Text('Excluir'),
               ),
             ),
           ],

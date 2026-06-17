@@ -107,6 +107,8 @@ class ProdutosDetailPage extends StatelessWidget {
             _SectionCard(
               title: 'Estoque',
               icon: Icons.warehouse_rounded,
+              semanticLabel:
+                  'Estoque. Quantidade ${produto.quantity} unidades${estoqueBaixo ? '. Atenção, estoque baixo' : ''}.',
               children: [
                 _InfoRow(
                   label: 'Quantidade',
@@ -135,6 +137,8 @@ class ProdutosDetailPage extends StatelessWidget {
             _SectionCard(
               title: 'Detalhes',
               icon: Icons.info_outline_rounded,
+              semanticLabel:
+                  'Detalhes. ID no sistema ${produto.id}. Categoria ${produto.categoryId}. Descrição ${produto.description}.',
               children: [
                 _InfoRow(label: 'ID no Sistema', value: '#${produto.id}'),
                 _InfoRow(label: 'ID Categoria', value: produto.categoryId),
@@ -160,6 +164,7 @@ class ProdutosDetailPage extends StatelessWidget {
             _SectionCard(
               title: 'Fornecedor',
               icon: Icons.local_shipping_rounded,
+              semanticLabel: 'Fornecedor. Empresa ${produto.supplier}.',
               children: [_InfoRow(label: 'Empresa', value: produto.supplier)],
             ),
             const SizedBox(height: 32),
@@ -272,44 +277,50 @@ class ProdutosDetailPage extends StatelessWidget {
 class _SectionCard extends StatelessWidget {
   final String title;
   final IconData icon;
+  final String? semanticLabel;
   final List<Widget> children;
 
   const _SectionCard({
     required this.title,
     required this.icon,
+    this.semanticLabel,
     required this.children,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.borderLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 18, color: AppColors.primary),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
+    return Semantics(
+      container: true,
+      label: semanticLabel,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.borderLight),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 18, color: AppColors.primary),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          ...children,
-        ],
+              ],
+            ),
+            const SizedBox(height: 16),
+            ...children,
+          ],
+        ),
       ),
     );
   }

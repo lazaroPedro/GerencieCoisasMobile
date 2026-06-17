@@ -6,6 +6,7 @@ import 'package:gerencie_coisas/core/theme/tema.dart';
 import 'package:gerencie_coisas/core/theme/theme_notifier.dart';
 import 'package:gerencie_coisas/core/views/home_screen.dart';
 import 'package:gerencie_coisas/features/auth/views/login_view.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +28,13 @@ class _MyAppState extends State<MyApp> {
       valueListenable: temaNotifier,
       builder: (context, themeMode, _) {
         return MaterialApp(
+          locale: const Locale('pt', 'BR'),
+          supportedLocales: const [Locale('pt', 'BR')],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
           debugShowCheckedModeBanner: false,
           title: 'Gerencie Coisas',
           theme: AppTheme.lightTheme,
@@ -48,8 +56,14 @@ class AuthWrapper extends StatelessWidget {
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+          return Scaffold(
+            body: Center(
+              child: Semantics(
+                label: 'Carregando autenticação',
+                liveRegion: true,
+                child: const CircularProgressIndicator(),
+              ),
+            ),
           );
         }
         if (snapshot.hasData && snapshot.data != null) {

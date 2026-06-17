@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import '../services/location_service.dart';
@@ -40,6 +41,13 @@ class _RegisterViewState extends State<RegisterView> {
     try {
       final loc = await _locationService.getCurrentLocation();
       setState(() => _localizacao = loc);
+      if (mounted) {
+        SemanticsService.sendAnnouncement(
+          View.of(context),
+          'Localização obtida com sucesso.',
+          Directionality.of(context),
+        );
+      }
     } catch (e) {
       setState(() => _erro = e.toString().replaceAll('Exception: ', ''));
     } finally {
@@ -50,15 +58,30 @@ class _RegisterViewState extends State<RegisterView> {
   Future<void> _registrar() async {
     if (_localizacao == null) {
       setState(() => _erro = 'Obtenha sua localização antes de continuar.');
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        _erro!,
+        Directionality.of(context),
+      );
       return;
     }
     if (_emailController.text.trim().isEmpty ||
         _passwordController.text.isEmpty) {
       setState(() => _erro = 'Preencha todos os campos.');
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        _erro!,
+        Directionality.of(context),
+      );
       return;
     }
     if (_passwordController.text != _confirmController.text) {
       setState(() => _erro = 'As senhas não coincidem.');
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        _erro!,
+        Directionality.of(context),
+      );
       return;
     }
 
@@ -117,7 +140,7 @@ class _RegisterViewState extends State<RegisterView> {
               Text(
                 'Sua cidade atual será vinculada à conta.',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurface.withOpacity(0.6),
+                  color: colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
               const SizedBox(height: 24),
@@ -130,13 +153,15 @@ class _RegisterViewState extends State<RegisterView> {
                       vertical: 12,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.1),
+                      color: Colors.green.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.green),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.location_on, color: Colors.green),
+                        const ExcludeSemantics(
+                          child: Icon(Icons.location_on, color: Colors.green),
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -169,9 +194,11 @@ class _RegisterViewState extends State<RegisterView> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _emailController,
+                autofillHints: const [AutofillHints.email],
                 keyboardType: TextInputType.emailAddress,
                 decoration: _inputDecoration(
                   context,
+                  label: 'E-mail',
                   hint: 'seu@email.com',
                   icone: Icons.email_outlined,
                 ),
@@ -182,13 +209,16 @@ class _RegisterViewState extends State<RegisterView> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _passwordController,
+                autofillHints: const [AutofillHints.newPassword],
                 obscureText: _obscure,
                 decoration: _inputDecoration(
                   context,
+                  label: 'Senha',
                   hint: '••••••••',
                   icone: Icons.lock_outline,
                 ).copyWith(
                   suffixIcon: IconButton(
+                    tooltip: _obscure ? 'Mostrar senha' : 'Ocultar senha',
                     icon: Icon(
                       _obscure ? Icons.visibility_off : Icons.visibility,
                     ),
@@ -202,9 +232,11 @@ class _RegisterViewState extends State<RegisterView> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _confirmController,
+                autofillHints: const [AutofillHints.newPassword],
                 obscureText: _obscure,
                 decoration: _inputDecoration(
                   context,
+                  label: 'Confirmar senha',
                   hint: '••••••••',
                   icone: Icons.lock_outline,
                 ),
@@ -212,15 +244,19 @@ class _RegisterViewState extends State<RegisterView> {
               const SizedBox(height: 24),
 
               if (_erro != null)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: colorScheme.errorContainer,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    _erro!,
-                    style: TextStyle(color: colorScheme.onErrorContainer),
+                Semantics(
+                  liveRegion: true,
+                  label: 'Erro: $_erro',
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: colorScheme.errorContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _erro!,
+                      style: TextStyle(color: colorScheme.onErrorContainer),
+                    ),
                   ),
                 ),
               if (_erro != null) const SizedBox(height: 16),
@@ -266,18 +302,20 @@ class _RegisterViewState extends State<RegisterView> {
       label,
       style: Theme.of(context).textTheme.labelLarge?.copyWith(
         fontWeight: FontWeight.w600,
-        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
       ),
     );
   }
 
   InputDecoration _inputDecoration(
     BuildContext context, {
+    required String label,
     required String hint,
     required IconData icone,
   }) {
     final cs = Theme.of(context).colorScheme;
     return InputDecoration(
+      labelText: label,
       hintText: hint,
       prefixIcon: Icon(icone, size: 20),
       filled: true,
@@ -285,11 +323,11 @@ class _RegisterViewState extends State<RegisterView> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: cs.outline.withOpacity(0.3)),
+        borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.3)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: cs.outline.withOpacity(0.3)),
+        borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.3)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

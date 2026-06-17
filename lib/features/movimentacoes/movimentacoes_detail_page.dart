@@ -13,8 +13,10 @@ class MovimentacoesDetailPage extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final isEntrada = movimentacao.tipo == TipoMovimentacao.entrada;
 
-    final tipoColor = isEntrada ? const Color(0xFF2E7D32) : const Color(0xFFC62828);
-    final tipoBackground = isEntrada ? const Color(0xFFE8F5E9) : const Color(0xFFFFEBEE);
+    final tipoColor =
+        isEntrada ? const Color(0xFF2E7D32) : const Color(0xFFC62828);
+    final tipoBackground =
+        isEntrada ? const Color(0xFFE8F5E9) : const Color(0xFFFFEBEE);
     final tipoLabel = isEntrada ? 'Entrada' : 'Saída';
     final tipoIcon =
         isEntrada ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded;
@@ -67,12 +69,15 @@ class MovimentacoesDetailPage extends StatelessWidget {
             _SectionCard(
               title: 'Produto',
               icon: Icons.inventory_2_rounded,
+              semanticLabel:
+                  'Produto. Nome ${movimentacao.produto}. Categoria ${movimentacao.categoria}. Quantidade ${movimentacao.quantidade} unidades.',
               children: [
                 _InfoRow(label: 'Nome', value: movimentacao.produto),
                 _InfoRow(label: 'Categoria', value: movimentacao.categoria),
                 _InfoRow(
-                    label: 'Quantidade',
-                    value: '${movimentacao.quantidade} unidades'),
+                  label: 'Quantidade',
+                  value: '${movimentacao.quantidade} unidades',
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -81,6 +86,7 @@ class MovimentacoesDetailPage extends StatelessWidget {
             _SectionCard(
               title: 'Fornecedor',
               icon: Icons.store_rounded,
+              semanticLabel: 'Fornecedor. Empresa ${movimentacao.fornecedor}.',
               children: [
                 _InfoRow(label: 'Empresa', value: movimentacao.fornecedor),
               ],
@@ -91,13 +97,17 @@ class MovimentacoesDetailPage extends StatelessWidget {
             _SectionCard(
               title: 'Valores',
               icon: Icons.attach_money_rounded,
+              semanticLabel:
+                  'Valores. Valor unitário ${movimentacao.valorUnitarioFormatado}. Quantidade ${movimentacao.quantidade}. Total ${movimentacao.valorFormatado}.',
               children: [
                 _InfoRow(
-                    label: 'Valor unitário',
-                    value: movimentacao.valorUnitarioFormatado),
+                  label: 'Valor unitário',
+                  value: movimentacao.valorUnitarioFormatado,
+                ),
                 _InfoRow(
-                    label: 'Quantidade',
-                    value: '× ${movimentacao.quantidade}'),
+                  label: 'Quantidade',
+                  value: '× ${movimentacao.quantidade}',
+                ),
                 const Divider(height: 24),
                 _InfoRow(
                   label: 'Total',
@@ -116,10 +126,13 @@ class MovimentacoesDetailPage extends StatelessWidget {
             _SectionCard(
               title: 'Data e hora',
               icon: Icons.calendar_today_rounded,
+              semanticLabel:
+                  'Data e hora. Registrado em ${movimentacao.dataHoraFormatada}.',
               children: [
                 _InfoRow(
-                    label: 'Registrado em',
-                    value: movimentacao.dataHoraFormatada),
+                  label: 'Registrado em',
+                  value: movimentacao.dataHoraFormatada,
+                ),
               ],
             ),
 
@@ -129,11 +142,12 @@ class MovimentacoesDetailPage extends StatelessWidget {
               _SectionCard(
                 title: 'Observação',
                 icon: Icons.notes_rounded,
+                semanticLabel: 'Observação. ${movimentacao.observacao!}',
                 children: [
                   Text(
                     movimentacao.observacao!,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurface.withOpacity(0.7),
+                      color: colorScheme.onSurface.withValues(alpha: 0.7),
                       height: 1.5,
                     ),
                   ),
@@ -148,15 +162,16 @@ class MovimentacoesDetailPage extends StatelessWidget {
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: () => _confirmDelete(context),
-                icon: const Icon(Icons.delete_outline_rounded,
-                    color: Color(0xFFC62828)),
+                icon: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: Color(0xFFC62828),
+                ),
                 label: const Text(
                   'Excluir movimentação',
                   style: TextStyle(color: Color(0xFFC62828)),
                 ),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(
-                      color: Color(0xFFC62828), width: 1.5),
+                  side: const BorderSide(color: Color(0xFFC62828), width: 1.5),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -171,54 +186,54 @@ class MovimentacoesDetailPage extends StatelessWidget {
     );
   }
 
-void _confirmDelete(BuildContext context) {
-  showDialog(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('Excluir movimentação?'),
-      content: Text(
-        'Tem certeza que deseja excluir a movimentação de "${movimentacao.produto}"? Esta ação não poderá ser desfeita.',
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text('Cancelar'),
-        ),
-        FilledButton(
-          style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFFC62828),
-          ),
-          onPressed: () async {
-            Navigator.pop(ctx);
-            try {
-              await MovimentacaoService().deletar(movimentacao.id);
-              if (!context.mounted) return;
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Movimentação excluída com sucesso.'),
-                  behavior: SnackBarBehavior.floating,
-                  backgroundColor: Color(0xFF2E7D32),
-                ),
-              );
-            } catch (e) {
-              if (!context.mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Erro ao excluir: $e'),
-                  behavior: SnackBarBehavior.floating,
+  void _confirmDelete(BuildContext context) {
+    showDialog(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Excluir movimentação?'),
+            content: Text(
+              'Tem certeza que deseja excluir a movimentação de "${movimentacao.produto}"? Esta ação não poderá ser desfeita.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancelar'),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(
                   backgroundColor: const Color(0xFFC62828),
                 ),
-              );
-            }
-          },
-          child: const Text('Excluir'),
-        ),
-      ],
-    ),
-  );
-}
-
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  try {
+                    await MovimentacaoService().deletar(movimentacao.id);
+                    if (!context.mounted) return;
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Movimentação excluída com sucesso.'),
+                        behavior: SnackBarBehavior.floating,
+                        backgroundColor: Color(0xFF2E7D32),
+                      ),
+                    );
+                  } catch (e) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Erro ao excluir: $e'),
+                        behavior: SnackBarBehavior.floating,
+                        backgroundColor: const Color(0xFFC62828),
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Excluir'),
+              ),
+            ],
+          ),
+    );
+  }
 }
 
 // Widgets internos
@@ -254,7 +269,7 @@ class _HeroCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -280,7 +295,9 @@ class _HeroCard extends StatelessWidget {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: tipoBackground,
                         borderRadius: BorderRadius.circular(20),
@@ -318,7 +335,7 @@ class _HeroCard extends StatelessWidget {
                   Text(
                     'Valor Total',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurface.withOpacity(0.5),
+                      color: colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                   ),
                   Text(
@@ -336,7 +353,7 @@ class _HeroCard extends StatelessWidget {
                   Text(
                     'Data',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurface.withOpacity(0.5),
+                      color: colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                   ),
                   Text(
@@ -358,11 +375,13 @@ class _HeroCard extends StatelessWidget {
 class _SectionCard extends StatelessWidget {
   final String title;
   final IconData icon;
+  final String? semanticLabel;
   final List<Widget> children;
 
   const _SectionCard({
     required this.title,
     required this.icon,
+    this.semanticLabel,
     required this.children,
   });
 
@@ -370,41 +389,48 @@ class _SectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon,
-                  size: 16, color: colorScheme.primary.withOpacity(0.8)),
-              const SizedBox(width: 6),
-              Text(
-                title,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: colorScheme.primary,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.4,
+    return Semantics(
+      container: true,
+      label: semanticLabel,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 16,
+                  color: colorScheme.primary.withValues(alpha: 0.8),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ...children,
-        ],
+                const SizedBox(width: 6),
+                Text(
+                  title,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...children,
+          ],
+        ),
       ),
     );
   }
@@ -431,14 +457,15 @@ class _InfoRow extends StatelessWidget {
             child: Text(
               label,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurface.withOpacity(0.5),
+                color: colorScheme.onSurface.withValues(alpha: 0.5),
               ),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: valueStyle ??
+              style:
+                  valueStyle ??
                   theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w500,
                     color: colorScheme.onSurface,

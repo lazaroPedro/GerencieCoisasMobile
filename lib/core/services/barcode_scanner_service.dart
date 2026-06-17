@@ -54,7 +54,7 @@ class _BarcodeScannerPageState extends State<_BarcodeScannerPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.flash_on_rounded),
-            tooltip: 'Lanterna',
+            tooltip: 'Ligar ou desligar lanterna',
             onPressed: _controller.toggleTorch,
           ),
           IconButton(
@@ -66,8 +66,12 @@ class _BarcodeScannerPageState extends State<_BarcodeScannerPage> {
       ),
       body: Stack(
         children: [
-          MobileScanner(controller: _controller, onDetect: _onDetect),
-          const _ScannerOverlay(),
+          Semantics(
+            label: 'Leitor de código de barras. Aponte a câmera para o código.',
+            liveRegion: true,
+            child: MobileScanner(controller: _controller, onDetect: _onDetect),
+          ),
+          const ExcludeSemantics(child: _ScannerOverlay()),
           Align(
             alignment: Alignment.bottomCenter,
             child: SafeArea(
