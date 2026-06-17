@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../services/auth_service.dart';
 import '../services/location_service.dart';
 import '../models/user_location_model.dart';
@@ -44,7 +45,7 @@ class _RegisterViewState extends State<RegisterView> {
       if (mounted) {
         SemanticsService.sendAnnouncement(
           View.of(context),
-          'Localização obtida com sucesso.',
+          'msg_localizacao_sucesso'.tr(), 
           Directionality.of(context),
         );
       }
@@ -57,7 +58,7 @@ class _RegisterViewState extends State<RegisterView> {
 
   Future<void> _registrar() async {
     if (_localizacao == null) {
-      setState(() => _erro = 'Obtenha sua localização antes de continuar.');
+      setState(() => _erro = 'erro_obter_localizacao'.tr()); 
       SemanticsService.sendAnnouncement(
         View.of(context),
         _erro!,
@@ -67,7 +68,7 @@ class _RegisterViewState extends State<RegisterView> {
     }
     if (_emailController.text.trim().isEmpty ||
         _passwordController.text.isEmpty) {
-      setState(() => _erro = 'Preencha todos os campos.');
+      setState(() => _erro = 'erro_preencher_campos'.tr()); 
       SemanticsService.sendAnnouncement(
         View.of(context),
         _erro!,
@@ -76,7 +77,7 @@ class _RegisterViewState extends State<RegisterView> {
       return;
     }
     if (_passwordController.text != _confirmController.text) {
-      setState(() => _erro = 'As senhas não coincidem.');
+      setState(() => _erro = 'erro_senhas_nao_coincidem'.tr()); 
       SemanticsService.sendAnnouncement(
         View.of(context),
         _erro!,
@@ -99,9 +100,9 @@ class _RegisterViewState extends State<RegisterView> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Conta criada com sucesso! Faça login.'),
-          backgroundColor: Color(0xFF2E7D32),
+        SnackBar(
+          content: Text('msg_conta_criada'.tr()), 
+          backgroundColor: const Color(0xFF2E7D32),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -123,9 +124,9 @@ class _RegisterViewState extends State<RegisterView> {
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainerLowest,
       appBar: AppBar(
-        title: const Text(
-          'Criar Conta',
-          style: TextStyle(fontWeight: FontWeight.w700),
+        title: Text(
+          'titulo_criar_conta'.tr(), 
+          style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         backgroundColor: colorScheme.surface,
         surfaceTintColor: Colors.transparent,
@@ -138,7 +139,7 @@ class _RegisterViewState extends State<RegisterView> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Sua cidade atual será vinculada à conta.',
+                'subtitulo_criar_conta'.tr(), 
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
@@ -165,7 +166,7 @@ class _RegisterViewState extends State<RegisterView> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Cidade de registro: ${_localizacao!.city}',
+                            'cidade_registro'.tr(args: [_localizacao!.city]), // 
                             style: const TextStyle(
                               color: Colors.green,
                               fontWeight: FontWeight.w600,
@@ -184,13 +185,13 @@ class _RegisterViewState extends State<RegisterView> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                             : const Icon(Icons.my_location),
-                    label: const Text('Obter Localização'),
+                    label: Text('botao_obter_localizacao'.tr()), 
                     onPressed: _carregando ? null : _obterLocalizacao,
                   ),
 
               const SizedBox(height: 20),
 
-              _labelSecao('E-mail'),
+              _labelSecao('label_email'.tr()), 
               const SizedBox(height: 8),
               TextFormField(
                 controller: _emailController,
@@ -198,14 +199,14 @@ class _RegisterViewState extends State<RegisterView> {
                 keyboardType: TextInputType.emailAddress,
                 decoration: _inputDecoration(
                   context,
-                  label: 'E-mail',
-                  hint: 'seu@email.com',
+                  label: 'label_email'.tr(), 
+                  hint: 'hint_email'.tr(), 
                   icone: Icons.email_outlined,
                 ),
               ),
               const SizedBox(height: 16),
 
-              _labelSecao('Senha'),
+              _labelSecao('label_senha'.tr()), 
               const SizedBox(height: 8),
               TextFormField(
                 controller: _passwordController,
@@ -213,12 +214,12 @@ class _RegisterViewState extends State<RegisterView> {
                 obscureText: _obscure,
                 decoration: _inputDecoration(
                   context,
-                  label: 'Senha',
-                  hint: '••••••••',
+                  label: 'label_senha'.tr(), 
+                  hint: 'hint_senha'.tr(), 
                   icone: Icons.lock_outline,
                 ).copyWith(
                   suffixIcon: IconButton(
-                    tooltip: _obscure ? 'Mostrar senha' : 'Ocultar senha',
+                    tooltip: _obscure ? 'tooltip_mostrar_senha'.tr() : 'tooltip_ocultar_senha'.tr(), 
                     icon: Icon(
                       _obscure ? Icons.visibility_off : Icons.visibility,
                     ),
@@ -228,7 +229,7 @@ class _RegisterViewState extends State<RegisterView> {
               ),
               const SizedBox(height: 16),
 
-              _labelSecao('Confirmar Senha'),
+              _labelSecao('label_confirmar_senha'.tr()), 
               const SizedBox(height: 8),
               TextFormField(
                 controller: _confirmController,
@@ -236,8 +237,8 @@ class _RegisterViewState extends State<RegisterView> {
                 obscureText: _obscure,
                 decoration: _inputDecoration(
                   context,
-                  label: 'Confirmar senha',
-                  hint: '••••••••',
+                  label: 'label_confirmar_senha'.tr(), 
+                  hint: 'hint_senha'.tr(), 
                   icone: Icons.lock_outline,
                 ),
               ),
@@ -246,7 +247,7 @@ class _RegisterViewState extends State<RegisterView> {
               if (_erro != null)
                 Semantics(
                   liveRegion: true,
-                  label: 'Erro: $_erro',
+                  label: 'erro_prefixo'.tr(args: [_erro!]), 
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -277,7 +278,7 @@ class _RegisterViewState extends State<RegisterView> {
                           )
                           : const Icon(Icons.person_add),
                   label: Text(
-                    _carregando ? 'Criando conta...' : 'Criar Conta',
+                    _carregando ? 'botao_criando_conta'.tr() : 'botao_criar_conta'.tr(), 
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 16,

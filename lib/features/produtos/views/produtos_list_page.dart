@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart'; // <-- Importação do pacote
 import 'package:gerencie_coisas/core/theme/app_colors.dart';
 import '../model/produto.dart';
-import '../services/produto_service.dart'; // Importação do serviço que criamos
+import '../services/produto_service.dart';
 import 'produtos_detail_page.dart';
 import 'produtos_form_page.dart';
 
@@ -17,7 +18,6 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
-  // Lista vazia que vai receber os dados reais do Firebase
   List<Produto> _todosProdutos = [];
   final _service = ProdutoService();
 
@@ -27,13 +27,11 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
     _carregarDados();
   }
 
-  // Função para buscar os dados no Firestore e atualizar a tela
   Future<void> _carregarDados() async {
     final dados = await _service.listar();
     setState(() => _todosProdutos = dados);
   }
 
-  // A filtragem agora usa a lista real (_todosProdutos)
   List<Produto> get _produtosFiltrados {
     if (_searchQuery.isEmpty) return _todosProdutos;
     return _todosProdutos.where((p) {
@@ -61,9 +59,9 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
     return Scaffold(
       backgroundColor: AppColors.bodyBg,
       appBar: AppBar(
-        title: const Text(
-          'Produtos',
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20),
+        title: Text(
+          'titulo_produtos'.tr(),
+          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 20),
         ),
         centerTitle: false,
       ),
@@ -72,11 +70,11 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: Semantics(
-              label: 'Buscar produto, fornecedor ou código de barras',
+              label: 'semantics_buscar_produto'.tr(),
               textField: true,
               child: SearchBar(
                 controller: _searchController,
-                hintText: 'Buscar produto, fornecedor ou código...',
+                hintText: 'hint_buscar_produto'.tr(),
                 hintStyle: const WidgetStatePropertyAll(
                   TextStyle(color: AppColors.textMuted, fontSize: 14),
                 ),
@@ -88,7 +86,7 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
                     _searchQuery.isNotEmpty
                         ? [
                           IconButton(
-                            tooltip: 'Limpar busca de produtos',
+                            tooltip: 'tooltip_limpar_busca'.tr(),
                             icon: const Icon(
                               Icons.close_rounded,
                               color: AppColors.textMuted,
@@ -119,7 +117,7 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                '${filtrados.length} produto${filtrados.length != 1 ? 's' : ''}',
+                '${filtrados.length} ${filtrados.length != 1 ? 'produto_plural'.tr() : 'produto_singular'.tr()}',
                 style: const TextStyle(
                   color: AppColors.textMuted,
                   fontSize: 12,
@@ -130,13 +128,12 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
           Expanded(
             child:
                 filtrados.isEmpty
-                    ? const Center(
+                    ? Center(
                       child: Text(
-                        'Nenhum produto encontrado.',
-                        style: TextStyle(color: AppColors.textMuted),
+                        'msg_nenhum_produto'.tr(),
+                        style: const TextStyle(color: AppColors.textMuted),
                       ),
                     )
-                    // Adicionado o RefreshIndicator para permitir recarregar a lista puxando para baixo
                     : RefreshIndicator(
                       onRefresh: _carregarDados,
                       child: ListView.separated(
@@ -155,21 +152,26 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
                           final barcodeLabel =
                               produto.barcode != null &&
                                       produto.barcode!.isNotEmpty
-                                  ? ', código de barras ${produto.barcode}'
+                                  ? 'texto_codigo_barras_prefix'.tr(args: [produto.barcode!])
                                   : '';
                           final statusEstoque =
                               estoqueBaixo
-                                  ? 'Estoque baixo'
-                                  : 'Estoque suficiente';
+                                  ? 'status_estoque_baixo'.tr()
+                                  : 'status_estoque_suficiente'.tr();
 
                           return Semantics(
                             button: true,
-                            label:
-                                'Produto ${produto.name}, fornecedor ${produto.supplier}, preço ${_formatarMoeda(produto.price)}, quantidade ${produto.quantity}. $statusEstoque$barcodeLabel. Toque duas vezes para abrir os detalhes.',
+                            label: 'semantics_produto_card'.tr(args: [
+                              produto.name, 
+                              produto.supplier, 
+                              _formatarMoeda(produto.price), 
+                              produto.quantity.toString(), 
+                              statusEstoque, 
+                              barcodeLabel
+                            ]),
                             child: ExcludeSemantics(
                               child: GestureDetector(
                                 onTap: () async {
-                                  // Await para recarregar caso um produto seja excluído ou editado na tela de detalhes
                                   await Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -236,7 +238,7 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
                                                     .isNotEmpty) ...[
                                               const SizedBox(height: 4),
                                               Text(
-                                                'Código: ${produto.barcode}',
+                                                'label_codigo'.tr(args: [produto.barcode!]),
                                                 style: const TextStyle(
                                                   color: AppColors.textMuted,
                                                   fontSize: 12,
@@ -280,7 +282,7 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
                                                         ),
                                                   ),
                                                   child: Text(
-                                                    'Qtd: ${produto.quantity}',
+                                                    'label_qtd'.tr(args: [produto.quantity.toString()]),
                                                     style: TextStyle(
                                                       fontSize: 12,
                                                       fontWeight:
@@ -311,9 +313,8 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        tooltip: 'Adicionar novo produto',
+        tooltip: 'tooltip_add_produto'.tr(), 
         onPressed: () async {
-          // Await adicionado aqui também para atualizar a lista ao retornar do formulário
           await Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const ProdutosFormPage()),
@@ -321,9 +322,9 @@ class _ProdutosListPageState extends State<ProdutosListPage> {
           _carregarDados();
         },
         icon: const Icon(Icons.add_rounded),
-        label: const Text(
-          'Novo Produto',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        label: Text(
+          'botao_novo_produto'.tr(), // <-- Texto traduzido
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
