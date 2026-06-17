@@ -1,4 +1,3 @@
-
 import 'package:gerencie_coisas/features/categorias/model/categoria_model.dart';
 import 'package:gerencie_coisas/features/categorias/repositories/categoria_repository.dart';
 import 'package:flutter/material.dart';
@@ -7,15 +6,11 @@ class Categoria {
   final CategoriaModel item;
   final List<CategoriaModel> children;
 
-  Categoria({
-    required this.item,
-    this.children = const [],
-  });
+  Categoria({required this.item, this.children = const []});
 }
 
-
 class CategoriaViewModel extends ChangeNotifier {
-  CategoriaRepository repository = CategoriaRepository();
+  late final CategoriaRepository repository;
 
   CategoriaViewModel({CategoriaRepository? repository}) {
     this.repository = repository ?? CategoriaRepository();
@@ -48,5 +43,4 @@ class CategoriaViewModel extends ChangeNotifier {
     await repository.delete(id);
     await loadCategorias();
   }
-
 }
