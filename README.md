@@ -1,3 +1,5 @@
+![Banner Gerencie Coisas](791d958f-4377-4725-8136-01a1e59a0167.jpeg)
+
 # 🎨 Design Tokens e Tematização
 
 Este projeto utiliza um sistema centralizado de **Design Tokens** para garantir consistência visual em toda a interface do aplicativo, suportando nativamente **Modo Claro** e **Modo Escuro**. 
