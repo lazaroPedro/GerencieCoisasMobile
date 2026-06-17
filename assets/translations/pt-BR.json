@@ -1,4 +1,14 @@
 {
+  "app_titulo": "Gerencie Coisas",
+  "login_subtitulo": "Faça login para continuar",
+  "botao_entrando": "Entrando...",
+  "botao_entrar": "Entrar",
+  "divisor_ou": "OU",
+  "botao_biometria": "Entrar com a Digital",
+  "botao_sem_conta": "Não tem conta? Cadastre-se",
+  "msg_localizacao_ok": "Localização obtida.",
+  "botao_atualizar": "Atualizar",
+
   "msg_localizacao_sucesso": "Localização obtida com sucesso.",
   "erro_obter_localizacao": "Obtenha sua localização antes de continuar.",
   "erro_preencher_campos": "Preencha todos os campos.",

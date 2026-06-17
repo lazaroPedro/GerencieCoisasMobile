@@ -1,4 +1,14 @@
 {
+  "app_titulo": "Manage Things",
+  "login_subtitulo": "Login to continue",
+  "botao_entrando": "Signing in...",
+  "botao_entrar": "Sign In",
+  "divisor_ou": "OR",
+  "botao_biometria": "Sign In with Fingerprint",
+  "botao_sem_conta": "Don't have an account? Sign up",
+  "msg_localizacao_ok": "Location acquired.",
+  "botao_atualizar": "Update",
+
   "msg_localizacao_sucesso": "Location successfully acquired.",
   "erro_obter_localizacao": "Please get your location before continuing.",
   "erro_preencher_campos": "Please fill in all fields.",
